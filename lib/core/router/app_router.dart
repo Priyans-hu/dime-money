@@ -3,6 +3,7 @@ import 'package:dime_money/features/dashboard/presentation/screens/dashboard_scr
 import 'package:dime_money/features/transactions/presentation/screens/transaction_history_screen.dart';
 import 'package:dime_money/features/budgets/presentation/screens/budgets_screen.dart';
 import 'package:dime_money/features/settings/presentation/screens/settings_screen.dart';
+import 'package:dime_money/features/accounts/presentation/screens/manage_accounts_screen.dart';
 import 'package:dime_money/shared/widgets/app_bottom_nav.dart';
 
 final appRouter = GoRouter(
@@ -42,6 +43,13 @@ final appRouter = GoRouter(
             GoRoute(
               path: '/settings',
               builder: (context, state) => const SettingsScreen(),
+              routes: [
+                GoRoute(
+                  path: 'accounts',
+                  builder: (context, state) =>
+                      const ManageAccountsScreen(),
+                ),
+              ],
             ),
           ],
         ),
