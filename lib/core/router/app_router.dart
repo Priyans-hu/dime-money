@@ -4,6 +4,8 @@ import 'package:dime_money/features/transactions/presentation/screens/transactio
 import 'package:dime_money/features/budgets/presentation/screens/budgets_screen.dart';
 import 'package:dime_money/features/settings/presentation/screens/settings_screen.dart';
 import 'package:dime_money/features/accounts/presentation/screens/manage_accounts_screen.dart';
+import 'package:dime_money/features/categories/presentation/screens/manage_categories_screen.dart';
+import 'package:dime_money/features/recurring/presentation/screens/recurring_screen.dart';
 import 'package:dime_money/shared/widgets/app_bottom_nav.dart';
 
 final appRouter = GoRouter(
@@ -48,6 +50,16 @@ final appRouter = GoRouter(
                   path: 'accounts',
                   builder: (context, state) =>
                       const ManageAccountsScreen(),
+                ),
+                GoRoute(
+                  path: 'categories',
+                  builder: (context, state) =>
+                      const ManageCategoriesScreen(),
+                ),
+                GoRoute(
+                  path: 'recurring',
+                  builder: (context, state) =>
+                      const RecurringScreen(),
                 ),
               ],
             ),

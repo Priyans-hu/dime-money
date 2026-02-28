@@ -22,6 +22,21 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.go('/settings/accounts'),
           ),
           ListTile(
+            leading: const Icon(Icons.category),
+            title: const Text('Categories'),
+            subtitle: const Text('Manage expense categories'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/categories'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.repeat),
+            title: const Text('Recurring'),
+            subtitle: const Text('Auto-repeating transactions'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/recurring'),
+          ),
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.palette),
             title: const Text('Theme'),
             subtitle: Text(themeMode.name[0].toUpperCase() +
