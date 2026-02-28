@@ -3,6 +3,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![CI](https://github.com/Priyans-hu/dime-money/actions/workflows/ci.yml/badge.svg)](https://github.com/Priyans-hu/dime-money/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/Priyans-hu/dime-money)](https://github.com/Priyans-hu/dime-money/releases)
+![Downloads](https://img.shields.io/github/downloads/Priyans-hu/dime-money/total)
 
 A minimal, beautiful personal finance tracker for **Android** and **iOS**. No sign-up, no cloud, fully local.
 
