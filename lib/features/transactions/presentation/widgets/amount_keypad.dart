@@ -4,13 +4,11 @@ import 'package:dime_money/core/utils/haptics.dart';
 class AmountKeypad extends StatelessWidget {
   final String currentAmount;
   final ValueChanged<String> onAmountChanged;
-  final VoidCallback? onDone;
 
   const AmountKeypad({
     super.key,
     required this.currentAmount,
     required this.onAmountChanged,
-    this.onDone,
   });
 
   void _onKey(String key) {
@@ -31,7 +29,6 @@ class AmountKeypad extends StatelessWidget {
         final parts = amount.split('.');
         if (parts[1].length >= 2) return;
       }
-      // Prevent leading zeros (except "0.")
       if (amount == '0' && key != '.') {
         amount = key;
       } else {
@@ -52,24 +49,6 @@ class AmountKeypad extends StatelessWidget {
         for (final row in _keys)
           Row(
             children: row.map((key) {
-              if (key == 'done') {
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: FilledButton(
-                      onPressed: onDone,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(0, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Icon(Icons.check, size: 28),
-                    ),
-                  ),
-                );
-              }
-
               return Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(4),
