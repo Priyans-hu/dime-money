@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:dime_money/core/constants/enums.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/features/transactions/presentation/widgets/amount_keypad.dart';
 import 'package:dime_money/features/transactions/presentation/widgets/category_picker_grid.dart';
@@ -19,6 +20,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   String _amount = '';
   int? _categoryId;
   int? _accountId;
+  bool _accountInitialized = false;
   TransactionType _type = TransactionType.expense;
   final _noteController = TextEditingController();
   int _step = 0; // 0 = amount, 1 = category, 2 = confirm
@@ -52,11 +54,13 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   @override
   Widget build(BuildContext context) {
     final accounts = ref.watch(allAccountsProvider);
+    final incomeEnabled = ref.watch(incomeEnabledProvider);
 
-    // Auto-select first account
-    if (_accountId == null) {
+    // Auto-select first account (once only)
+    if (!_accountInitialized) {
       accounts.whenData((list) {
-        if (list.isNotEmpty && _accountId == null) {
+        if (list.isNotEmpty) {
+          _accountInitialized = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _accountId = list.first.id);
           });
@@ -86,16 +90,18 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                   Haptics.selection();
                 }),
               ),
-              const Gap(8),
-              _TypeChip(
-                label: 'Income',
-                selected: _type == TransactionType.income,
-                color: Colors.green,
-                onTap: () => setState(() {
-                  _type = TransactionType.income;
-                  Haptics.selection();
-                }),
-              ),
+              if (incomeEnabled) ...[
+                const Gap(8),
+                _TypeChip(
+                  label: 'Income',
+                  selected: _type == TransactionType.income,
+                  color: Colors.green,
+                  onTap: () => setState(() {
+                    _type = TransactionType.income;
+                    Haptics.selection();
+                  }),
+                ),
+              ],
             ],
           ),
           const Gap(16),
