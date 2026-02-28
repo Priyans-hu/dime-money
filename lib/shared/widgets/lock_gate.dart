@@ -15,12 +15,20 @@ class LockGate extends ConsumerStatefulWidget {
 class _LockGateState extends ConsumerState<LockGate>
     with WidgetsBindingObserver {
   bool _isLocked = false;
+  String? _errorMessage;
   final _auth = LocalAuthentication();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final biometricEnabled = ref.read(biometricEnabledProvider);
+      if (biometricEnabled) {
+        setState(() => _isLocked = true);
+        _authenticate();
+      }
+    });
   }
 
   @override
@@ -43,6 +51,7 @@ class _LockGateState extends ConsumerState<LockGate>
   }
 
   Future<void> _authenticate() async {
+    setState(() => _errorMessage = null);
     try {
       final didAuth = await _auth.authenticate(
         localizedReason: 'Unlock Dime Money',
@@ -50,10 +59,17 @@ class _LockGateState extends ConsumerState<LockGate>
       );
       if (didAuth) {
         setState(() => _isLocked = false);
+      } else {
+        setState(() => _errorMessage = 'Authentication failed');
       }
-    } catch (_) {
-      // If biometric fails, stay locked
+    } catch (e) {
+      setState(() => _errorMessage = 'Biometric authentication unavailable');
     }
+  }
+
+  void _disableLock() {
+    ref.read(biometricEnabledProvider.notifier).disable();
+    setState(() => _isLocked = false);
   }
 
   @override
@@ -69,11 +85,23 @@ class _LockGateState extends ConsumerState<LockGate>
                 const Icon(Icons.lock, size: 64),
                 const SizedBox(height: 16),
                 const Text('Dime Money is locked'),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   onPressed: _authenticate,
                   icon: const Icon(Icons.fingerprint),
                   label: const Text('Unlock'),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _disableLock,
+                  child: const Text('Disable biometric lock'),
                 ),
               ],
             ),
