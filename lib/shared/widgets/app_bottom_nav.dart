@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/features/transactions/presentation/widgets/quick_add_sheet.dart';
 
 class AppBottomNav extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -46,20 +47,13 @@ class AppBottomNav extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Haptics.medium();
-          _showQuickAdd(context);
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => const QuickAddSheet(),
+          );
         },
         child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  void _showQuickAdd(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => const SizedBox(
-        height: 400,
-        child: Center(child: Text('Quick Add - Coming Soon')),
       ),
     );
   }
