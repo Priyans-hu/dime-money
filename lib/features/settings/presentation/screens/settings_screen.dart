@@ -10,6 +10,7 @@ import 'package:dime_money/core/utils/csv_exporter.dart';
 import 'package:dime_money/core/utils/csv_importer.dart';
 import 'package:dime_money/core/utils/update_checker.dart';
 import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
+import 'package:dime_money/core/utils/seed_data.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -77,8 +78,29 @@ class SettingsScreen extends ConsumerWidget {
             title: const Text('Biometric lock'),
             subtitle: const Text('Require fingerprint/Face ID'),
             value: biometricEnabled,
-            onChanged: (_) =>
-                ref.read(biometricEnabledProvider.notifier).toggle(),
+            onChanged: (_) async {
+              try {
+                final success =
+                    await ref.read(biometricEnabledProvider.notifier).toggle();
+                if (!success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Biometric auth unavailable'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Auth failed: $e'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
           ),
           const Divider(),
           _SectionHeader('Backup'),
@@ -146,6 +168,36 @@ class SettingsScreen extends ConsumerWidget {
             value: autoCheckUpdate,
             onChanged: (_) =>
                 ref.read(autoCheckUpdateProvider.notifier).toggle(),
+          ),
+          const Divider(),
+          _SectionHeader('Debug'),
+          ListTile(
+            leading: const Icon(Icons.bug_report),
+            title: const Text('Seed test data'),
+            subtitle: const Text('Add dummy transactions & budgets'),
+            onTap: () async {
+              try {
+                final db = ref.read(databaseProvider);
+                final count = await seedDummyData(db);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Seeded $count transactions'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Seed failed: $e'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
           ),
           const Divider(),
           const _VersionFooter(),
