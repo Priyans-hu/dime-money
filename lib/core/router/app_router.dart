@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dime_money/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:dime_money/features/transactions/presentation/screens/transaction_history_screen.dart';
@@ -8,7 +9,10 @@ import 'package:dime_money/features/categories/presentation/screens/manage_categ
 import 'package:dime_money/features/recurring/presentation/screens/recurring_screen.dart';
 import 'package:dime_money/shared/widgets/app_bottom_nav.dart';
 
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/dashboard',
   routes: [
     StatefulShellRoute.indexedStack(
