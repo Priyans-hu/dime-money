@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import 'package:dime_money/core/providers/database_provider.dart';
 import 'package:dime_money/core/providers/theme_provider.dart';
+import 'package:dime_money/core/utils/csv_exporter.dart';
+import 'package:dime_money/core/utils/csv_importer.dart';
 import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -78,21 +83,49 @@ class SettingsScreen extends ConsumerWidget {
             leading: const Icon(Icons.upload_file),
             title: const Text('Export CSV'),
             subtitle: const Text('Share your transaction data'),
-            onTap: () {
-              // Will be implemented in Phase 8
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Export coming soon')),
-              );
+            onTap: () async {
+              try {
+                final db = ref.read(databaseProvider);
+                await CsvExporter(db).exportAndShare();
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Export failed: $e')),
+                  );
+                }
+              }
             },
           ),
           ListTile(
             leading: const Icon(Icons.download),
             title: const Text('Import CSV'),
             subtitle: const Text('Import from file'),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Import coming soon')),
+            onTap: () async {
+              final result = await FilePicker.platform.pickFiles(
+                type: FileType.custom,
+                allowedExtensions: ['csv'],
               );
+              if (result == null || result.files.isEmpty) return;
+              final path = result.files.single.path;
+              if (path == null) return;
+
+              try {
+                final db = ref.read(databaseProvider);
+                final count =
+                    await CsvImporter(db).importFromFile(File(path));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Imported $count transactions')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Import failed: $e')),
+                  );
+                }
+              }
             },
           ),
         ],
