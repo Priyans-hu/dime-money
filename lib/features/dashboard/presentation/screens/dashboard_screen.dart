@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:dime_money/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:dime_money/features/dashboard/presentation/widgets/balance_header.dart';
 import 'package:dime_money/features/dashboard/presentation/widgets/spending_donut.dart';
 import 'package:dime_money/features/dashboard/presentation/widgets/period_toggle.dart';
@@ -17,7 +18,9 @@ class DashboardScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(allProviders);
+          ref.invalidate(dashboardTotalsProvider);
+          ref.invalidate(dashboardCategoryBreakdownProvider);
+          ref.invalidate(totalBalanceProvider);
         },
         child: ListView(
           padding: const EdgeInsets.only(bottom: 80),
@@ -52,6 +55,3 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 }
-
-// Provider to invalidate all dashboard data on refresh
-final allProviders = Provider((ref) => null);
