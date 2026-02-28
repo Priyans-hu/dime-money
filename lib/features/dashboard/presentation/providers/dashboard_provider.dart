@@ -9,6 +9,9 @@ final dashboardPeriodProvider =
 
 final dashboardTotalsProvider =
     FutureProvider<({double income, double expense})>((ref) async {
+  // Watch transactions stream so this recomputes on any change
+  ref.watch(allTransactionsProvider);
+
   final period = ref.watch(dashboardPeriodProvider);
   final repo = ref.watch(transactionRepositoryProvider);
 
@@ -33,12 +36,35 @@ final dashboardTotalsProvider =
 
 final dashboardCategoryBreakdownProvider =
     FutureProvider<Map<int, double>>((ref) async {
-  final now = DateTime.now();
+  // Watch transactions stream so this recomputes on any change
+  ref.watch(allTransactionsProvider);
+
+  final period = ref.watch(dashboardPeriodProvider);
   final repo = ref.watch(transactionRepositoryProvider);
-  return repo.expensesByCategoryForMonth(now.year, now.month);
+
+  final now = DateTime.now();
+  late DateTime start;
+  late DateTime end;
+
+  switch (period) {
+    case DashboardPeriod.daily:
+      start = now.startOfDay;
+      end = now.endOfDay;
+    case DashboardPeriod.weekly:
+      start = now.startOfWeek;
+      end = now.endOfWeek;
+    case DashboardPeriod.monthly:
+      start = now.startOfMonth;
+      end = now.endOfMonth;
+  }
+
+  return repo.expensesByCategoryForRange(start, end);
 });
 
 final totalBalanceProvider = FutureProvider<double>((ref) async {
+  // Watch transactions stream so this recomputes on any change
+  ref.watch(allTransactionsProvider);
+
   final accountRepo = ref.watch(accountRepositoryProvider);
   final accounts = await accountRepo.getAll();
   double total = 0;

@@ -9,10 +9,22 @@ import 'package:dime_money/features/transactions/presentation/providers/transact
 class SpendingDonut extends ConsumerWidget {
   const SpendingDonut({super.key});
 
+  String _emptyLabel(DashboardPeriod period) {
+    switch (period) {
+      case DashboardPeriod.daily:
+        return 'No expenses today';
+      case DashboardPeriod.weekly:
+        return 'No expenses this week';
+      case DashboardPeriod.monthly:
+        return 'No expenses this month';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final breakdownAsync = ref.watch(dashboardCategoryBreakdownProvider);
     final categoriesAsync = ref.watch(allCategoriesProvider);
+    final period = ref.watch(dashboardPeriodProvider);
 
     return breakdownAsync.when(
       loading: () => const SizedBox(
@@ -22,11 +34,11 @@ class SpendingDonut extends ConsumerWidget {
       error: (_, _) => const SizedBox.shrink(),
       data: (breakdown) {
         if (breakdown.isEmpty) {
-          return const SizedBox(
+          return SizedBox(
             height: 100,
             child: Center(
-              child: Text('No expenses this month',
-                  style: TextStyle(color: Colors.grey)),
+              child: Text(_emptyLabel(period),
+                  style: const TextStyle(color: Colors.grey)),
             ),
           );
         }

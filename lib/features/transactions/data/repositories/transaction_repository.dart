@@ -102,6 +102,23 @@ class TransactionRepository {
     return map;
   }
 
+  // Aggregation: sum expenses by category for a date range
+  Future<Map<int, double>> expensesByCategoryForRange(
+      DateTime start, DateTime end) async {
+    final query = _db.select(_db.transactions)
+      ..where((t) =>
+          t.type.equals(TransactionType.expense.name) &
+          t.date.isBetweenValues(start, end) &
+          t.categoryId.isNotNull());
+
+    final rows = await query.get();
+    final map = <int, double>{};
+    for (final row in rows) {
+      map[row.categoryId!] = (map[row.categoryId!] ?? 0) + row.amount;
+    }
+    return map;
+  }
+
   // Total income/expense for a date range
   Future<({double income, double expense})> totalsForRange(
       DateTime start, DateTime end) async {
