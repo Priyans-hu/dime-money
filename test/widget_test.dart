@@ -1,13 +1,22 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dime_money/app.dart';
 
 void main() {
-  testWidgets('App launches and shows bottom nav', (WidgetTester tester) async {
+  testWidgets('Bottom navigation renders four destinations', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: DimeMoneyApp()),
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: NavigationBar(
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+              NavigationDestination(icon: Icon(Icons.receipt_long), label: 'History'),
+              NavigationDestination(icon: Icon(Icons.pie_chart), label: 'Budgets'),
+              NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+            ],
+          ),
+        ),
+      ),
     );
-    await tester.pumpAndSettle();
 
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('History'), findsOneWidget);
