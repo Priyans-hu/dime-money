@@ -4,6 +4,8 @@ import 'package:dime_money/core/theme/app_theme.dart';
 import 'package:dime_money/core/router/app_router.dart' show appRouter, rootNavigatorKey;
 import 'package:dime_money/core/providers/theme_provider.dart';
 import 'package:dime_money/core/utils/update_checker.dart';
+import 'package:dime_money/core/utils/quick_action_handler.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/shared/widgets/lock_gate.dart';
 
 class DimeMoneyApp extends ConsumerStatefulWidget {
@@ -16,9 +18,12 @@ class DimeMoneyApp extends ConsumerStatefulWidget {
 }
 
 class _DimeMoneyAppState extends ConsumerState<DimeMoneyApp> {
+  bool _shortcutsInitialized = false;
+
   @override
   void initState() {
     super.initState();
+    QuickActionHandler.init();
     if (widget.checkForUpdate) {
       _silentUpdateCheck();
     }
@@ -42,6 +47,17 @@ class _DimeMoneyAppState extends ConsumerState<DimeMoneyApp> {
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+
+    // Update quick action shortcuts when income toggle changes
+    final incomeEnabled = ref.watch(incomeEnabledProvider);
+    ref.listen<bool>(incomeEnabledProvider, (previous, value) {
+      QuickActionHandler.updateShortcuts(value);
+    });
+
+    if (!_shortcutsInitialized) {
+      _shortcutsInitialized = true;
+      QuickActionHandler.updateShortcuts(incomeEnabled);
+    }
 
     return LockGate(
       child: MaterialApp.router(

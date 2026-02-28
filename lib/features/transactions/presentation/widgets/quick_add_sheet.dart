@@ -14,8 +14,9 @@ import 'package:dime_money/features/transactions/presentation/widgets/account_se
 
 class QuickAddSheet extends ConsumerStatefulWidget {
   final Transaction? editTransaction;
+  final TransactionType? initialType;
 
-  const QuickAddSheet({super.key, this.editTransaction});
+  const QuickAddSheet({super.key, this.editTransaction, this.initialType});
 
   @override
   ConsumerState<QuickAddSheet> createState() => _QuickAddSheetState();
@@ -49,6 +50,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _noteController.text = txn.note;
       _selectedDate = txn.date;
       _showKeypad = false;
+    } else if (widget.initialType != null) {
+      _type = widget.initialType!;
     }
   }
 
@@ -171,7 +174,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom +
+            16,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

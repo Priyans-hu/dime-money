@@ -5,10 +5,14 @@ import 'package:dime_money/app.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/providers/database_provider.dart';
 import 'package:dime_money/features/recurring/data/repositories/recurring_repository.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:dime_money/core/utils/widget_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Set iOS App Group for widget data sharing
+  await HomeWidget.setAppGroupId('group.com.priyanshu.dimeMoney');
 
   // Create DB and process recurring rules on app start
   final db = AppDatabase();
