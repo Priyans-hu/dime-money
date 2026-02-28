@@ -273,10 +273,11 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
           ),
           if (_showKeypad) const Gap(8),
 
-          // Category picker (compact horizontal scroll)
+          // Category picker (compact chips)
           _SectionLabel(label: 'Category'),
           const Gap(6),
           CategoryPickerGrid(
+            compact: true,
             selectedId: _categoryId,
             onSelected: (cat) {
               Haptics.selection();
