@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dime_money/core/providers/theme_provider.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -9,11 +10,15 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final incomeEnabled = ref.watch(incomeEnabledProvider);
+    final currencySymbol = ref.watch(currencySymbolProvider);
+    final biometricEnabled = ref.watch(biometricEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
+          _SectionHeader('Data'),
           ListTile(
             leading: const Icon(Icons.account_balance_wallet),
             title: const Text('Accounts'),
@@ -36,14 +41,109 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.go('/settings/recurring'),
           ),
           const Divider(),
+          _SectionHeader('Preferences'),
+          SwitchListTile(
+            secondary: const Icon(Icons.trending_up),
+            title: const Text('Income tracking'),
+            subtitle: const Text('Show income option in quick add'),
+            value: incomeEnabled,
+            onChanged: (_) =>
+                ref.read(incomeEnabledProvider.notifier).toggle(),
+          ),
+          ListTile(
+            leading: const Icon(Icons.attach_money),
+            title: const Text('Currency symbol'),
+            subtitle: Text(currencySymbol),
+            onTap: () => _showCurrencyPicker(context, ref),
+          ),
           ListTile(
             leading: const Icon(Icons.palette),
             title: const Text('Theme'),
-            subtitle: Text(themeMode.name[0].toUpperCase() +
-                themeMode.name.substring(1)),
+            subtitle: Text(_themeModeLabel(themeMode)),
             onTap: () => ref.read(themeModeProvider.notifier).toggle(),
           ),
+          const Divider(),
+          _SectionHeader('Security'),
+          SwitchListTile(
+            secondary: const Icon(Icons.fingerprint),
+            title: const Text('Biometric lock'),
+            subtitle: const Text('Require fingerprint/Face ID'),
+            value: biometricEnabled,
+            onChanged: (_) =>
+                ref.read(biometricEnabledProvider.notifier).toggle(),
+          ),
+          const Divider(),
+          _SectionHeader('Backup'),
+          ListTile(
+            leading: const Icon(Icons.upload_file),
+            title: const Text('Export CSV'),
+            subtitle: const Text('Share your transaction data'),
+            onTap: () {
+              // Will be implemented in Phase 8
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Export coming soon')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.download),
+            title: const Text('Import CSV'),
+            subtitle: const Text('Import from file'),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Import coming soon')),
+              );
+            },
+          ),
         ],
+      ),
+    );
+  }
+
+  String _themeModeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return 'System';
+      case ThemeMode.light:
+        return 'Light';
+      case ThemeMode.dark:
+        return 'Dark';
+    }
+  }
+
+  void _showCurrencyPicker(BuildContext context, WidgetRef ref) {
+    const symbols = ['\$', '\u20AC', '\u00A3', '\u00A5', '\u20B9', '\u20A9', 'R\$', 'CHF'];
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => ListView(
+        shrinkWrap: true,
+        children: symbols
+            .map((s) => ListTile(
+                  title: Text(s),
+                  onTap: () {
+                    ref.read(currencySymbolProvider.notifier).set(s);
+                    Navigator.pop(context);
+                  },
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
       ),
     );
   }
