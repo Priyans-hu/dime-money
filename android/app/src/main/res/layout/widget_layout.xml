@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dime Money"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_balance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="$0.00"
+        android:textSize="28sp"
+        android:textColor="#1C1B1F"
+        android:textStyle="bold"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/widget_today"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Today: ↗$0  ↙$0"
+        android:textSize="13sp"
+        android:textColor="#888888"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>

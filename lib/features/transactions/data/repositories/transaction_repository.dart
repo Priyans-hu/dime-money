@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/constants/enums.dart';
+import 'package:dime_money/core/utils/widget_data.dart';
 
 class TransactionRepository {
   final AppDatabase _db;
@@ -52,25 +53,33 @@ class TransactionRepository {
     String note = '',
     required DateTime date,
     int? recurringRuleId,
-  }) {
-    return _db.into(_db.transactions).insert(TransactionsCompanion.insert(
-          type: type,
-          amount: amount,
-          categoryId: Value(categoryId),
-          accountId: accountId,
-          toAccountId: Value(toAccountId),
-          note: Value(note),
-          date: date,
-          recurringRuleId: Value(recurringRuleId),
-        ));
+  }) async {
+    final id =
+        await _db.into(_db.transactions).insert(TransactionsCompanion.insert(
+              type: type,
+              amount: amount,
+              categoryId: Value(categoryId),
+              accountId: accountId,
+              toAccountId: Value(toAccountId),
+              note: Value(note),
+              date: date,
+              recurringRuleId: Value(recurringRuleId),
+            ));
+    updateWidgetData(_db);
+    return id;
   }
 
-  Future<void> update(Transaction txn) {
-    return _db.update(_db.transactions).replace(txn);
+  Future<void> update(Transaction txn) async {
+    await _db.update(_db.transactions).replace(txn);
+    updateWidgetData(_db);
   }
 
-  Future<int> deleteById(int id) {
-    return (_db.delete(_db.transactions)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteById(int id) async {
+    final count =
+        await (_db.delete(_db.transactions)..where((t) => t.id.equals(id)))
+            .go();
+    updateWidgetData(_db);
+    return count;
   }
 
   // Aggregation: sum expenses by category for a month
