@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:dime_money/core/extensions/currency_ext.dart';
 import 'package:dime_money/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/shared/widgets/glass_card.dart';
 
 class BalanceHeader extends ConsumerWidget {
@@ -12,31 +13,47 @@ class BalanceHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final balanceAsync = ref.watch(totalBalanceProvider);
     final totalsAsync = ref.watch(dashboardTotalsProvider);
+    final currency = ref.watch(currencySymbolProvider);
     final colorScheme = Theme.of(context).colorScheme;
 
     return GlassCard(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Text(
             'Total Balance',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
           ),
-          const Gap(4),
+          const Gap(8),
           balanceAsync.when(
             loading: () => const Text('...'),
             error: (_, _) => const Text('--'),
-            data: (balance) => Text(
-              balance.formatCurrency(),
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            data: (balance) => Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  currency,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.5),
+                        fontWeight: FontWeight.w300,
+                      ),
+                ),
+                const Gap(4),
+                Text(
+                  balance.formatCurrency(),
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
             ),
           ),
-          const Gap(16),
+          const Gap(20),
           totalsAsync.when(
             loading: () => const SizedBox.shrink(),
             error: (_, _) => const SizedBox.shrink(),
@@ -47,16 +64,18 @@ class BalanceHeader extends ConsumerWidget {
                     label: 'Income',
                     amount: totals.income,
                     color: Colors.green,
-                    icon: Icons.arrow_downward,
+                    icon: Icons.south_west,
+                    currency: currency,
                   ),
                 ),
                 const Gap(12),
                 Expanded(
                   child: _StatChip(
-                    label: 'Expense',
+                    label: 'Expenses',
                     amount: totals.expense,
                     color: Colors.red,
-                    icon: Icons.arrow_upward,
+                    icon: Icons.north_east,
+                    currency: currency,
                   ),
                 ),
               ],
@@ -73,26 +92,35 @@ class _StatChip extends StatelessWidget {
   final double amount;
   final Color color;
   final IconData icon;
+  final String currency;
 
   const _StatChip({
     required this.label,
     required this.amount,
     required this.color,
     required this.icon,
+    required this.currency,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: color),
-          const Gap(6),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 14, color: color),
+          ),
+          const Gap(8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,7 +131,7 @@ class _StatChip extends StatelessWidget {
                         .labelSmall
                         ?.copyWith(color: color)),
                 Text(
-                  amount.formatCurrency(),
+                  '$currency${amount.formatCurrency()}',
                   style: Theme.of(context)
                       .textTheme
                       .titleSmall
