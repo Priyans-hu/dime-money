@@ -33,6 +33,10 @@ final allAccountsProvider = StreamProvider<List<Account>>((ref) {
   return ref.watch(accountRepositoryProvider).watchAll();
 });
 
+final mostFrequentCategoryProvider = FutureProvider<int?>((ref) {
+  return ref.watch(transactionRepositoryProvider).mostFrequentCategoryId();
+});
+
 final searchTransactionsProvider =
     StreamProvider.family<List<Transaction>, String>((ref, query) {
   return ref.watch(transactionRepositoryProvider).search(query);

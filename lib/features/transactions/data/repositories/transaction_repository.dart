@@ -111,6 +111,16 @@ class TransactionRepository {
     return (income: income, expense: expense);
   }
 
+  /// Returns the most frequently used category ID, or null if no transactions.
+  Future<int?> mostFrequentCategoryId() async {
+    final result = await _db.customSelect(
+      'SELECT category_id, COUNT(*) as cnt FROM transactions '
+      'WHERE category_id IS NOT NULL '
+      'GROUP BY category_id ORDER BY cnt DESC LIMIT 1',
+    ).getSingleOrNull();
+    return result?.read<int?>('category_id');
+  }
+
   // Search by note or category name
   Stream<List<Transaction>> search(String query) {
     final pattern = '%$query%';

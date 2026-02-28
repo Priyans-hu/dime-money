@@ -156,6 +156,17 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       });
     }
 
+    // Auto-select most frequent category for new transactions
+    if (!_isEditing && _categoryId == null) {
+      ref.watch(mostFrequentCategoryProvider).whenData((id) {
+        if (id != null && _categoryId == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _categoryId = id);
+          });
+        }
+      });
+    }
+
     return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 16,
