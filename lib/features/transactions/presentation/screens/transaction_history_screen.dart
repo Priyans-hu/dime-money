@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/extensions/date_ext.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/features/transactions/presentation/widgets/transaction_tile.dart';
@@ -59,7 +60,7 @@ class _TransactionHistoryScreenState
           }
 
           // Group by date
-          final grouped = <String, List<dynamic>>{};
+          final grouped = <String, List<Transaction>>{};
           for (final txn in transactions) {
             final label = txn.date.relativeLabel;
             grouped.putIfAbsent(label, () => []).add(txn);

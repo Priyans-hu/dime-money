@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:dime_money/core/constants/enums.dart';
+import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/extensions/currency_ext.dart';
 import 'package:dime_money/core/extensions/date_ext.dart';
 import 'package:dime_money/core/utils/haptics.dart';
@@ -192,7 +193,7 @@ class RecurringScreen extends ConsumerWidget {
 }
 
 class _RecurringRuleTile extends ConsumerWidget {
-  final dynamic rule;
+  final RecurringRule rule;
 
   const _RecurringRuleTile({required this.rule});
 
@@ -218,14 +219,14 @@ class _RecurringRuleTile extends ConsumerWidget {
             final cat = rule.categoryId != null
                 ? cats.where((c) => c.id == rule.categoryId).firstOrNull
                 : null;
-            return Text(cat?.name ?? rule.note.toString());
+            return Text(cat?.name ?? rule.note);
           },
         ),
         subtitle: Text(
-          '${rule.recurrence.name} · started ${(rule.startDate as DateTime).shortFormatted}',
+          '${rule.recurrence.name} · started ${rule.startDate.shortFormatted}',
         ),
         trailing: Text(
-          '${isExpense ? "-" : "+"}${(rule.amount as double).formatCurrency()}',
+          '${isExpense ? "-" : "+"}${rule.amount.formatCurrency()}',
           style: TextStyle(
             color: isExpense ? Colors.red : Colors.green,
             fontWeight: FontWeight.w600,
@@ -235,7 +236,7 @@ class _RecurringRuleTile extends ConsumerWidget {
           Haptics.medium();
           await ref
               .read(recurringRepositoryProvider)
-              .deleteById(rule.id as int);
+              .deleteById(rule.id);
         },
       ),
     );

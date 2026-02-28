@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:dime_money/core/constants/enums.dart';
+import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/utils/haptics.dart';
 import 'package:dime_money/core/theme/color_tokens.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
@@ -138,7 +139,7 @@ class ManageAccountsScreen extends ConsumerWidget {
   }
 
   void _showArchiveDialog(
-      BuildContext context, WidgetRef ref, dynamic account) {
+      BuildContext context, WidgetRef ref, Account account) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
