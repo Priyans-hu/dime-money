@@ -23,37 +23,23 @@ class UpdateChecker {
   static const _apiUrl =
       'https://api.github.com/repos/$_repo/releases/latest';
 
-  /// Returns true if [remoteBuildNumber] > [localBuildNumber].
-  /// Build numbers are monotonically increasing integers (the +N in pubspec).
-  static bool _isNewer(int remoteBuildNumber, int localBuildNumber) {
-    return remoteBuildNumber > localBuildNumber;
+  /// Compare semver strings. Returns true if [remote] > [local].
+  /// Handles formats like "0.3.0", "v0.3.1", "0.4.0+5".
+  static bool _isNewer(String remote, String local) {
+    final r = _parseSemver(remote);
+    final l = _parseSemver(local);
+    for (var i = 0; i < 3; i++) {
+      if (r[i] > l[i]) return true;
+      if (r[i] < l[i]) return false;
+    }
+    return false;
   }
 
-  /// Extract build number from release tag or name.
-  /// Looks for "+N" suffix first, then checks release body for "build: N".
-  /// Falls back to 0 if not found.
-  static int _extractBuildNumber(Map<String, dynamic> releaseData) {
-    final tagName = releaseData['tag_name'] as String? ?? '';
-    final body = releaseData['body'] as String? ?? '';
-
-    // Check tag for +N suffix (e.g. v0.3.0+3)
-    final plusMatch = RegExp(r'\+(\d+)').firstMatch(tagName);
-    if (plusMatch != null) return int.parse(plusMatch.group(1)!);
-
-    // Check release body for "build: N" or "Build: N"
-    final bodyMatch =
-        RegExp(r'[Bb]uild:\s*(\d+)').firstMatch(body);
-    if (bodyMatch != null) return int.parse(bodyMatch.group(1)!);
-
-    // Fallback: use the APK filename pattern (e.g. app-release-3.apk)
-    final assets = releaseData['assets'] as List<dynamic>? ?? [];
-    for (final asset in assets) {
-      final name = asset['name'] as String? ?? '';
-      final nameMatch = RegExp(r'(\d+)\.apk$').firstMatch(name);
-      if (nameMatch != null) return int.parse(nameMatch.group(1)!);
-    }
-
-    return 0;
+  /// Parse "v0.3.1+5" → [0, 3, 1]. Strips leading 'v' and trailing '+N'.
+  static List<int> _parseSemver(String version) {
+    final cleaned = version.replaceAll(RegExp(r'^v'), '').split('+').first;
+    final parts = cleaned.split('.');
+    return List.generate(3, (i) => int.tryParse(i < parts.length ? parts[i] : '0') ?? 0);
   }
 
   /// Check GitHub releases for a newer version.
@@ -71,9 +57,7 @@ class UpdateChecker {
       final body = data['body'] as String? ?? '';
 
       final packageInfo = await PackageInfo.fromPlatform();
-      final localBuild = int.tryParse(packageInfo.buildNumber) ?? 0;
-      final remoteBuild = _extractBuildNumber(data);
-      if (!_isNewer(remoteBuild, localBuild)) return null;
+      if (!_isNewer(tagName, packageInfo.version)) return null;
 
       // Find the APK asset
       final assets = data['assets'] as List<dynamic>? ?? [];
