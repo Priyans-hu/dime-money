@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_description">Shows your balance and today\'s spending</string>
+    <string name="widget_small_description">Shows your current balance</string>
+    <string name="widget_medium_description">Shows balance and today\'s spending</string>
+    <string name="widget_large_description">Shows balance, today, week, and month spending</string>
+    <string name="shortcut_add_expense">Add Expense</string>
+    <string name="shortcut_add_income">Add Income</string>
 </resources>

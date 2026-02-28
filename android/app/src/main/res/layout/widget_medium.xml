@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="@android:color/white"
+    android:background="@drawable/widget_background"
     android:gravity="center_vertical">
 
     <TextView
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:text="Dime Money"
         android:textSize="14sp"
-        android:textColor="#666666"
+        android:textColor="@color/widget_text_secondary"
         android:textStyle="bold" />
 
     <TextView
@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:text="$0.00"
         android:textSize="28sp"
-        android:textColor="#1C1B1F"
+        android:textColor="@color/widget_text_primary"
         android:textStyle="bold"
         android:layout_marginTop="4dp" />
 
@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:text="Today: ↗$0  ↙$0"
         android:textSize="13sp"
-        android:textColor="#888888"
+        android:textColor="@color/widget_text_muted"
         android:layout_marginTop="4dp" />
 
 </LinearLayout>
