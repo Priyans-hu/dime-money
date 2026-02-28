@@ -31,7 +31,7 @@ dependencies:
   gap: ^3.0.1
 
   # Utils
-  local_auth: ^2.3.0
+  local_auth: ^3.0.1
   share_plus: ^10.1.4
   file_picker: ^8.1.7
   csv: ^6.0.0
