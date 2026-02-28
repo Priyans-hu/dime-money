@@ -11,8 +11,10 @@ import 'package:dime_money/core/utils/widget_data.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set iOS App Group for widget data sharing
-  await HomeWidget.setAppGroupId('group.com.priyanshu.dimeMoney');
+  // Set iOS App Group for widget data sharing (no-op on Android)
+  try {
+    await HomeWidget.setAppGroupId('group.com.priyanshu.dimeMoney');
+  } catch (_) {}
 
   // Create DB and process recurring rules on app start
   final db = AppDatabase();
@@ -20,7 +22,9 @@ void main() async {
   await recurringRepo.processRules();
 
   // Update home screen widget data
-  await updateWidgetData(db);
+  try {
+    await updateWidgetData(db);
+  } catch (_) {}
 
   // Check auto-update preference
   final prefs = await SharedPreferences.getInstance();

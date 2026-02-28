@@ -15,31 +15,35 @@ class QuickActionHandler {
     if (_initialized) return;
     _initialized = true;
 
-    // Check if app was launched via a quick action (Android method channel)
     try {
-      final launchAction = await _channel.invokeMethod<String>('getLaunchAction');
-      if (launchAction != null) {
-        // Delay to ensure navigation is ready
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _handle(launchAction);
-        });
+      // Check if app was launched via a quick action (Android method channel)
+      try {
+        final launchAction =
+            await _channel.invokeMethod<String>('getLaunchAction');
+        if (launchAction != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _handle(launchAction);
+          });
+        }
+      } catch (_) {
+        // Method channel not available
       }
-    } on MissingPluginException {
-      // Method channel not available (e.g., iOS uses quick_actions plugin)
+
+      // Listen for actions while app is running (Android)
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'quickAction') {
+          final action = call.arguments as String?;
+          if (action != null) _handle(action);
+        }
+      });
+
+      // iOS quick actions via plugin
+      _quickActions.initialize((action) {
+        _handle(action);
+      });
+    } catch (_) {
+      // Quick actions not available on this platform
     }
-
-    // Listen for actions while app is running (Android)
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'quickAction') {
-        final action = call.arguments as String?;
-        if (action != null) _handle(action);
-      }
-    });
-
-    // iOS quick actions via plugin
-    _quickActions.initialize((action) {
-      _handle(action);
-    });
   }
 
   static void _handle(String action) {
@@ -78,6 +82,8 @@ class QuickActionHandler {
         ),
     ];
 
-    await _quickActions.setShortcutItems(shortcuts);
+    try {
+      await _quickActions.setShortcutItems(shortcuts);
+    } catch (_) {}
   }
 }

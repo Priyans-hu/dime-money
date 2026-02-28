@@ -4,9 +4,6 @@ import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/constants/enums.dart';
 
 Future<void> updateWidgetData(AppDatabase db) async {
-  // Set iOS App Group for shared data
-  await HomeWidget.setAppGroupId('group.com.priyanshu.dimeMoney');
-
   // Compute total balance across all active accounts
   final accounts = await (db.select(db.accounts)
         ..where((a) => a.isArchived.equals(false)))
@@ -85,11 +82,11 @@ Future<void> updateWidgetData(AppDatabase db) async {
       'month_expense', monthExpense.toStringAsFixed(2));
   await HomeWidget.saveWidgetData('currency', currency);
 
-  // Trigger all Android widget providers
-  await HomeWidget.updateWidget(androidName: 'DimeSmallWidgetProvider');
-  await HomeWidget.updateWidget(androidName: 'DimeMediumWidgetProvider');
-  await HomeWidget.updateWidget(androidName: 'DimeLargeWidgetProvider');
-
-  // Trigger iOS widget
-  await HomeWidget.updateWidget(iOSName: 'DimeWidget');
+  // Trigger widget updates (may fail if widgets aren't added yet)
+  try {
+    await HomeWidget.updateWidget(androidName: 'DimeSmallWidgetProvider');
+    await HomeWidget.updateWidget(androidName: 'DimeMediumWidgetProvider');
+    await HomeWidget.updateWidget(androidName: 'DimeLargeWidgetProvider');
+    await HomeWidget.updateWidget(iOSName: 'DimeWidget');
+  } catch (_) {}
 }
