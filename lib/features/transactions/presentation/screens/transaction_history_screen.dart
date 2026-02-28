@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/extensions/date_ext.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
+import 'package:dime_money/features/transactions/presentation/widgets/quick_add_sheet.dart';
 import 'package:dime_money/features/transactions/presentation/widgets/transaction_tile.dart';
 import 'package:dime_money/shared/widgets/empty_state.dart';
 
@@ -18,6 +19,43 @@ class _TransactionHistoryScreenState
     extends ConsumerState<TransactionHistoryScreen> {
   String _searchQuery = '';
   bool _showSearch = false;
+
+  void _openEditSheet(Transaction txn) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => QuickAddSheet(editTransaction: txn),
+    );
+  }
+
+  void _deleteWithUndo(Transaction txn) {
+    final repo = ref.read(transactionRepositoryProvider);
+    repo.deleteById(txn.id);
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Transaction deleted'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            repo.insert(
+              type: txn.type,
+              amount: txn.amount,
+              categoryId: txn.categoryId,
+              accountId: txn.accountId,
+              toAccountId: txn.toAccountId,
+              note: txn.note,
+              date: txn.date,
+              recurringRuleId: txn.recurringRuleId,
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,8 +115,7 @@ class _TransactionHistoryScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding:
-                        const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                     child: Text(
                       dateLabel,
                       style: Theme.of(context)
@@ -93,11 +130,8 @@ class _TransactionHistoryScreenState
                   ),
                   ...items.map((txn) => TransactionTile(
                         transaction: txn,
-                        onDismissed: () {
-                          ref
-                              .read(transactionRepositoryProvider)
-                              .deleteById(txn.id);
-                        },
+                        onTap: () => _openEditSheet(txn),
+                        onDismissed: () => _deleteWithUndo(txn),
                       )),
                 ],
               );
