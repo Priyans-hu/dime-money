@@ -13,7 +13,6 @@ import 'package:dime_money/features/transactions/presentation/widgets/category_p
 import 'package:dime_money/features/transactions/presentation/widgets/account_selector.dart';
 
 class QuickAddSheet extends ConsumerStatefulWidget {
-  /// Pass an existing transaction to open in edit mode.
   final Transaction? editTransaction;
 
   const QuickAddSheet({super.key, this.editTransaction});
@@ -30,7 +29,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   TransactionType _type = TransactionType.expense;
   final _noteController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
-  int _step = 0; // 0 = amount, 1 = category, 2 = confirm
+  bool _showKeypad = true;
 
   bool get _isEditing => widget.editTransaction != null;
 
@@ -41,7 +40,6 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     if (txn != null) {
       _type = txn.type;
       _amount = txn.amount.toString();
-      // Remove trailing .0 for whole numbers
       if (_amount.endsWith('.0')) {
         _amount = _amount.substring(0, _amount.length - 2);
       }
@@ -50,7 +48,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _accountInitialized = true;
       _noteController.text = txn.note;
       _selectedDate = txn.date;
-      _step = 2; // Jump to confirm step for editing
+      _showKeypad = false;
     }
   }
 
@@ -62,30 +60,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
   double get _parsedAmount => double.tryParse(_amount) ?? 0;
 
-  void _nextStep() {
-    if (_step == 0) {
-      if (_parsedAmount <= 0) {
-        _showError('Enter an amount');
-        return;
-      }
-      Haptics.selection();
-      setState(() => _step = 1);
-    } else if (_step == 1) {
-      if (_categoryId == null) {
-        _showError('Pick a category');
-        return;
-      }
-      Haptics.selection();
-      setState(() => _step = 2);
-    }
-  }
-
-  void _prevStep() {
-    if (_step > 0) {
-      Haptics.selection();
-      setState(() => _step -= 1);
-    }
-  }
+  bool get _canSubmit =>
+      _parsedAmount > 0 &&
+      _accountId != null &&
+      (_type == TransactionType.transfer || _categoryId != null);
 
   void _showError(String message) {
     Haptics.heavy();
@@ -105,9 +83,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 
   void _submit() async {
@@ -115,17 +91,16 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _showError('Enter an amount');
       return;
     }
-    if (_accountId == null) {
-      _showError('Select an account');
-      return;
-    }
     if (_type != TransactionType.transfer && _categoryId == null) {
       _showError('Pick a category');
       return;
     }
+    if (_accountId == null) {
+      _showError('Select an account');
+      return;
+    }
 
     Haptics.medium();
-
     final repo = ref.read(transactionRepositoryProvider);
 
     if (_isEditing) {
@@ -152,6 +127,16 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    if (target == today) return 'Today';
+    if (target == today.subtract(const Duration(days: 1))) return 'Yesterday';
+    if (target == today.add(const Duration(days: 1))) return 'Tomorrow';
+    return DateFormat('EEE, d MMM').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
     final accounts = ref.watch(allAccountsProvider);
@@ -160,7 +145,6 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     final typeColor =
         _type == TransactionType.expense ? Colors.red : Colors.green;
 
-    // Auto-select first account (once only, for new transactions)
     if (!_accountInitialized) {
       accounts.whenData((list) {
         if (list.isNotEmpty) {
@@ -172,7 +156,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       });
     }
 
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
@@ -195,10 +179,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
             ),
           ),
 
-          // Header: type toggle + step indicator
+          // Type toggle row
           Row(
             children: [
-              // Type toggle
               _TypeChip(
                 label: 'Expense',
                 selected: _type == TransactionType.expense,
@@ -221,231 +204,144 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 ),
               ],
               const Spacer(),
-              // Step indicator dots
-              Row(
-                children: List.generate(3, (i) {
-                  final isActive = i == _step;
-                  final isDone = i < _step;
-                  return Container(
-                    width: isActive ? 20 : 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: isDone
-                          ? typeColor
-                          : isActive
-                              ? typeColor.withValues(alpha: 0.7)
-                              : colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  );
-                }),
+              // Date chip
+              ActionChip(
+                avatar: const Icon(Icons.calendar_today, size: 16),
+                label: Text(_formatDate(_selectedDate)),
+                onPressed: _pickDate,
               ),
             ],
           ),
-          const Gap(16),
-
-          // Amount display (always visible, tappable to go back to step 0)
-          GestureDetector(
-            onTap: _step != 0 ? () => setState(() => _step = 0) : null,
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ref.watch(currencySymbolProvider),
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: typeColor.withValues(alpha: 0.5),
-                          fontWeight: FontWeight.w400,
-                        ),
-                  ),
-                  const Gap(4),
-                  Text(
-                    _amount.isEmpty ? '0' : _amount,
-                    style:
-                        Theme.of(context).textTheme.displayMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: typeColor,
-                            ),
-                  ),
-                  if (_step != 0)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4, top: 4),
-                      child: Icon(Icons.edit, size: 16, color: typeColor.withValues(alpha: 0.5)),
-                    ),
-                ],
-              ),
-            ),
-          ),
           const Gap(12),
 
-          // Step content
-          if (_step == 0) ...[
-            AmountKeypad(
-              currentAmount: _amount,
-              onAmountChanged: (v) => setState(() => _amount = v),
-            ),
-            const Gap(8),
-            // Next button
-            FilledButton(
-              onPressed: _parsedAmount > 0 ? _nextStep : null,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                backgroundColor: typeColor,
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Next', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  Gap(4),
-                  Icon(Icons.arrow_forward, size: 20),
-                ],
-              ),
-            ),
-          ] else if (_step == 1) ...[
-            Row(
-              children: [
-                IconButton(
-                  onPressed: _prevStep,
-                  icon: const Icon(Icons.arrow_back),
-                  style: IconButton.styleFrom(
-                    backgroundColor: colorScheme.surfaceContainerHigh,
-                  ),
-                ),
-                const Gap(8),
-                Text('Pick a category',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            const Gap(12),
-            CategoryPickerGrid(
-              selectedId: _categoryId,
-              onSelected: (cat) {
-                setState(() {
-                  _categoryId = cat.id;
-                  _step = 2;
-                });
-              },
-            ),
-          ] else ...[
-            // Confirm step: account, note, date, submit
-            Row(
-              children: [
-                IconButton(
-                  onPressed: _prevStep,
-                  icon: const Icon(Icons.arrow_back),
-                  style: IconButton.styleFrom(
-                    backgroundColor: colorScheme.surfaceContainerHigh,
-                  ),
-                ),
-                const Gap(8),
-                Text(_isEditing ? 'Edit transaction' : 'Finalize',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            const Gap(12),
-
-            // Account selector
-            Text('Account',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    )),
-            const Gap(6),
-            AccountSelector(
-              selectedId: _accountId,
-              onSelected: (a) => setState(() => _accountId = a.id),
-            ),
-            const Gap(12),
-
-            // Date picker row
-            Text('Date',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    )),
-            const Gap(6),
-            GestureDetector(
-              onTap: _pickDate,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
+          // Amount display — tap to toggle keypad
+          GestureDetector(
+            onTap: () => setState(() => _showKeypad = !_showKeypad),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Icon(Icons.calendar_today,
-                        size: 18, color: colorScheme.onSurfaceVariant),
-                    const Gap(8),
                     Text(
-                      _formatDate(_selectedDate),
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      ref.watch(currencySymbolProvider),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: typeColor.withValues(alpha: 0.5),
+                                fontWeight: FontWeight.w400,
+                              ),
                     ),
-                    const Spacer(),
-                    Icon(Icons.chevron_right,
-                        size: 20, color: colorScheme.onSurfaceVariant),
+                    const Gap(4),
+                    Text(
+                      _amount.isEmpty ? '0' : _amount,
+                      style:
+                          Theme.of(context).textTheme.displayMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: typeColor,
+                              ),
+                    ),
                   ],
                 ),
               ),
             ),
-            const Gap(12),
+          ),
 
-            // Note field
-            TextField(
-              controller: _noteController,
-              decoration: InputDecoration(
-                hintText: 'Add a note (optional)',
-                prefixIcon: const Icon(Icons.note_outlined),
-                isDense: true,
-                filled: true,
-                fillColor:
-                    colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              textInputAction: TextInputAction.done,
-              maxLength: 50,
+          // Keypad (collapsible)
+          AnimatedCrossFade(
+            firstChild: AmountKeypad(
+              currentAmount: _amount,
+              onAmountChanged: (v) => setState(() => _amount = v),
             ),
-            const Gap(8),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _showKeypad
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            duration: const Duration(milliseconds: 200),
+          ),
+          if (_showKeypad) const Gap(8),
 
-            // Submit button
-            FilledButton.icon(
-              onPressed: _submit,
-              icon: Icon(_isEditing ? Icons.save : Icons.check),
-              label: Text(
-                _isEditing ? 'Save' : 'Add ${_type == TransactionType.expense ? 'Expense' : 'Income'}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          // Category picker (compact horizontal scroll)
+          _SectionLabel(label: 'Category'),
+          const Gap(6),
+          CategoryPickerGrid(
+            selectedId: _categoryId,
+            onSelected: (cat) {
+              Haptics.selection();
+              setState(() => _categoryId = cat.id);
+            },
+          ),
+          const Gap(12),
+
+          // Account selector
+          _SectionLabel(label: 'Account'),
+          const Gap(6),
+          AccountSelector(
+            selectedId: _accountId,
+            onSelected: (a) => setState(() => _accountId = a.id),
+          ),
+          const Gap(12),
+
+          // Note field
+          TextField(
+            controller: _noteController,
+            decoration: InputDecoration(
+              hintText: 'Add a note (optional)',
+              prefixIcon: const Icon(Icons.note_outlined),
+              isDense: true,
+              filled: true,
+              fillColor:
+                  colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                backgroundColor: typeColor,
-              ),
+              counterText: '',
             ),
-          ],
+            textInputAction: TextInputAction.done,
+            maxLength: 50,
+          ),
+          const Gap(12),
+
+          // Submit button
+          FilledButton.icon(
+            onPressed: _canSubmit ? _submit : null,
+            icon: Icon(_isEditing ? Icons.save : Icons.check),
+            label: Text(
+              _isEditing
+                  ? 'Save'
+                  : 'Add ${_type == TransactionType.expense ? 'Expense' : 'Income'}',
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor: typeColor,
+            ),
+          ),
           const Gap(8),
         ],
       ),
     );
   }
+}
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final target = DateTime(date.year, date.month, date.day);
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
 
-    if (target == today) return 'Today';
-    if (target == today.subtract(const Duration(days: 1))) return 'Yesterday';
-    if (target == today.add(const Duration(days: 1))) return 'Tomorrow';
-    return DateFormat('EEE, d MMM yyyy').format(date);
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+    );
   }
 }
 
