@@ -1,0 +1,53 @@
+name: dime_money
+description: A minimal, beautiful personal finance tracker
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Database
+  drift: ^2.22.1
+  sqlite3_flutter_libs: ^0.5.28
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # UI
+  fl_chart: ^0.70.2
+  flutter_animate: ^4.5.2
+  gap: ^3.0.1
+
+  # Utils
+  local_auth: ^2.3.0
+  share_plus: ^10.1.4
+  file_picker: ^8.1.7
+  csv: ^6.0.0
+  shared_preferences: ^2.3.5
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.14
+  drift_dev: ^2.22.1
+  riverpod_generator: ^2.6.3
+  riverpod_lint: ^2.6.3
+  custom_lint: ^0.7.1
+
+flutter:
+  uses-material-design: true
