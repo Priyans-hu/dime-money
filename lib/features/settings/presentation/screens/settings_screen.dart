@@ -155,6 +155,14 @@ class SettingsScreen extends ConsumerWidget {
               }
             },
           ),
+          if (Platform.isAndroid)
+            ListTile(
+              leading: const Icon(Icons.sms),
+              title: const Text('Import from SMS'),
+              subtitle: const Text('Scan bank messages'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/settings/sms-import'),
+            ),
           const Divider(),
           _SectionHeader('Updates'),
           ListTile(
