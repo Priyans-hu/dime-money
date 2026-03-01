@@ -22,7 +22,7 @@ class AppBottomNav extends ConsumerWidget {
     return Scaffold(
       extendBody: true,
       body: navigationShell,
-      floatingActionButton: Padding(
+      floatingActionButton: currentIndex == 3 ? null : Padding(
         padding: EdgeInsets.only(bottom: 72 + safeBottom),
         child: FloatingActionButton(
           onPressed: () {
@@ -41,7 +41,7 @@ class AppBottomNav extends ConsumerWidget {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: _PillNavBar(
+      bottomNavigationBar: _LiquidGlassNavBar(
         currentIndex: currentIndex,
         safeBottom: safeBottom,
         colorScheme: colorScheme,
@@ -58,14 +58,14 @@ class AppBottomNav extends ConsumerWidget {
   }
 }
 
-class _PillNavBar extends StatelessWidget {
+class _LiquidGlassNavBar extends StatelessWidget {
   final int currentIndex;
   final double safeBottom;
   final ColorScheme colorScheme;
   final bool isDark;
   final ValueChanged<int> onTap;
 
-  const _PillNavBar({
+  const _LiquidGlassNavBar({
     required this.currentIndex,
     required this.safeBottom,
     required this.colorScheme,
@@ -84,61 +84,109 @@ class _PillNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        bottom: safeBottom + 16,
+        left: 16,
+        right: 16,
+        bottom: safeBottom + 12,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-          child: Container(
-            height: 64,
-            decoration: BoxDecoration(
-              color: (isDark ? Colors.white : colorScheme.surface)
-                  .withValues(alpha: 0.65),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black)
-                    .withValues(alpha: 0.1),
-              ),
+      child: Container(
+        height: 64,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.12),
+              blurRadius: 24,
+              offset: const Offset(0, 6),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(_items.length, (index) {
-                final isSelected = index == currentIndex;
-                final item = _items[index];
-
-                return GestureDetector(
-                  onTap: () => onTap(index),
-                  behavior: HitTestBehavior.opaque,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: isDark ? 0.15 : 0.25),
+                  width: 0.5,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Sliding active pill indicator
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colorScheme.primary.withValues(alpha: 0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      isSelected ? item.activeIcon : item.icon,
-                      color: isSelected
-                          ? colorScheme.primary
-                          : colorScheme.onSurface.withValues(alpha: 0.6),
-                      size: 24,
+                    left: _pillLeft(context),
+                    top: 10,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                        child: Container(
+                          width: 56,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                );
-              }),
+                  // Icons row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(_items.length, (index) {
+                      final isSelected = index == currentIndex;
+                      final item = _items[index];
+
+                      return GestureDetector(
+                        onTap: () => onTap(index),
+                        behavior: HitTestBehavior.opaque,
+                        child: SizedBox(
+                          width: 56,
+                          height: 64,
+                          child: Center(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: Icon(
+                                isSelected ? item.activeIcon : item.icon,
+                                key: ValueKey('${index}_$isSelected'),
+                                color: isSelected
+                                    ? colorScheme.primary
+                                    : (isDark
+                                        ? Colors.white.withValues(alpha: 0.5)
+                                        : colorScheme.onSurface
+                                            .withValues(alpha: 0.45)),
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  double _pillLeft(BuildContext context) {
+    final barWidth = MediaQuery.of(context).size.width - 32; // 16 padding each side
+    final slotWidth = barWidth / _items.length;
+    return slotWidth * currentIndex + (slotWidth - 56) / 2;
   }
 }
