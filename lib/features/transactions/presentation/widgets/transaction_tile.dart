@@ -5,6 +5,7 @@ import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/extensions/currency_ext.dart';
 import 'package:dime_money/core/extensions/date_ext.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 
 class TransactionTile extends ConsumerWidget {
@@ -22,6 +23,7 @@ class TransactionTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(allCategoriesProvider);
+    final currency = ref.watch(currencySymbolProvider);
 
     final isExpense = transaction.type == TransactionType.expense;
     final isTransfer = transaction.type == TransactionType.transfer;
@@ -39,7 +41,26 @@ class TransactionTile extends ConsumerWidget {
       ),
       confirmDismiss: (_) async {
         Haptics.medium();
-        return true;
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Delete transaction?'),
+            content: Text(
+              '${isExpense ? "Expense" : isTransfer ? "Transfer" : "Income"} of ${transaction.amount.formatCurrency(symbol: currency)}',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        );
+        return confirmed ?? false;
       },
       onDismissed: (_) => onDismissed?.call(),
       child: ListTile(
@@ -94,7 +115,7 @@ class TransactionTile extends ConsumerWidget {
               )
             : Text(transaction.date.shortFormatted),
         trailing: Text(
-          '$sign${transaction.amount.formatCurrency()}',
+          '$sign${transaction.amount.formatCurrency(symbol: currency)}',
           style: Theme.of(context)
               .textTheme
               .titleSmall

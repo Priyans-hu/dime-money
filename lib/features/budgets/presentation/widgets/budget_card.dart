@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/extensions/currency_ext.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/features/budgets/presentation/widgets/budget_progress_bar.dart';
 
@@ -21,6 +22,7 @@ class BudgetCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(allCategoriesProvider);
+    final currency = ref.watch(currencySymbolProvider);
     final remaining = (budget.amount - spent).clamp(0.0, double.infinity);
     final pct =
         budget.amount > 0 ? (spent / budget.amount * 100).round() : 0;
@@ -76,11 +78,11 @@ class BudgetCard extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${spent.formatCurrency()} spent',
+                    '${spent.formatCurrency(symbol: currency)} spent',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Text(
-                    '${remaining.formatCurrency()} left',
+                    '${remaining.formatCurrency(symbol: currency)} left',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),

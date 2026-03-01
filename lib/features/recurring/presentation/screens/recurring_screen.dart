@@ -7,6 +7,7 @@ import 'package:dime_money/core/extensions/currency_ext.dart';
 import 'package:dime_money/core/extensions/date_ext.dart';
 import 'package:dime_money/core/utils/haptics.dart';
 import 'package:dime_money/core/utils/sheet_padding.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/features/recurring/presentation/providers/recurring_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/shared/widgets/empty_state.dart';
@@ -206,6 +207,7 @@ class _RecurringRuleTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(allCategoriesProvider);
+    final currency = ref.watch(currencySymbolProvider);
     final isExpense = rule.type == TransactionType.expense;
 
     return Card(
@@ -232,7 +234,7 @@ class _RecurringRuleTile extends ConsumerWidget {
           '${rule.recurrence.name} · started ${rule.startDate.shortFormatted}',
         ),
         trailing: Text(
-          '${isExpense ? "-" : "+"}${rule.amount.formatCurrency()}',
+          '${isExpense ? "-" : "+"}${rule.amount.formatCurrency(symbol: currency)}',
           style: TextStyle(
             color: isExpense ? Colors.red : Colors.green,
             fontWeight: FontWeight.w600,
