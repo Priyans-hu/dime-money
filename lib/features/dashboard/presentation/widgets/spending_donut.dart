@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:gap/gap.dart';
 import 'package:dime_money/core/extensions/currency_ext.dart';
 import 'package:dime_money/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 
 class SpendingDonut extends ConsumerWidget {
@@ -25,6 +26,7 @@ class SpendingDonut extends ConsumerWidget {
     final breakdownAsync = ref.watch(dashboardCategoryBreakdownProvider);
     final categoriesAsync = ref.watch(allCategoriesProvider);
     final period = ref.watch(dashboardPeriodProvider);
+    final currency = ref.watch(currencySymbolProvider);
 
     return breakdownAsync.when(
       loading: () => const SizedBox(
@@ -113,7 +115,7 @@ class SpendingDonut extends ConsumerWidget {
                           const Gap(8),
                           Expanded(child: Text(item.name)),
                           Text(
-                            item.amount.formatCurrency(),
+                            item.amount.formatCurrency(symbol: currency),
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium

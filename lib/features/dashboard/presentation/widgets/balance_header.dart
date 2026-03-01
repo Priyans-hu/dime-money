@@ -45,7 +45,7 @@ class BalanceHeader extends ConsumerWidget {
                 ),
                 const Gap(4),
                 Text(
-                  balance.formatCurrency(),
+                  balance.formatNumber(),
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -131,7 +131,7 @@ class _StatChip extends StatelessWidget {
                         .labelSmall
                         ?.copyWith(color: color)),
                 Text(
-                  '$currency${amount.formatCurrency()}',
+                  '$currency${amount.formatNumber()}',
                   style: Theme.of(context)
                       .textTheme
                       .titleSmall
