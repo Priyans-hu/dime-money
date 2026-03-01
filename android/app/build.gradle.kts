@@ -9,6 +9,7 @@ android {
     namespace = "com.priyanshu.dime_money"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+    buildToolsVersion = "36.1.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
