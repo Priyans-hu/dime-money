@@ -136,12 +136,14 @@ class SettingsScreen extends ConsumerWidget {
 
               try {
                 final db = ref.read(databaseProvider);
-                final count =
+                final result =
                     await CsvImporter(db).importFromFile(File(path));
                 if (context.mounted) {
+                  final parts = <String>['Imported ${result.imported}'];
+                  if (result.duplicates > 0) parts.add('${result.duplicates} duplicates skipped');
+                  if (result.skipped > 0) parts.add('${result.skipped} invalid rows');
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Imported $count transactions')),
+                    SnackBar(content: Text(parts.join(', '))),
                   );
                 }
               } catch (e) {
