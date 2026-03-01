@@ -34,7 +34,7 @@ dependencies:
   local_auth: ^2.3.0
   share_plus: ^10.1.4
   file_picker: ^8.1.7
-  csv: ^6.0.0
+  csv: ^7.1.0
   shared_preferences: ^2.3.5
   home_widget: ^0.7.0
   quick_actions: ^1.0.7
