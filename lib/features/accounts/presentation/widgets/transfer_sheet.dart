@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:dime_money/core/constants/enums.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/core/utils/sheet_padding.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 
 class TransferSheet extends ConsumerStatefulWidget {
@@ -53,7 +54,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        bottom: sheetBottomPadding(context),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

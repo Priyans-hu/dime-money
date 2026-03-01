@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:dime_money/core/constants/enums.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/core/utils/sheet_padding.dart';
 import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/features/transactions/presentation/widgets/amount_keypad.dart';
@@ -174,9 +175,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).viewPadding.bottom +
-            16,
+        bottom: sheetBottomPadding(context),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

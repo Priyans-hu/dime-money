@@ -6,6 +6,7 @@ import 'package:dime_money/core/theme/color_tokens.dart';
 import 'package:dime_money/core/utils/haptics.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/features/categories/presentation/widgets/icon_picker.dart';
+import 'package:dime_money/core/utils/sheet_padding.dart';
 import 'package:dime_money/features/categories/presentation/widgets/color_picker.dart';
 
 class ManageCategoriesScreen extends ConsumerWidget {
@@ -17,9 +18,14 @@ class ManageCategoriesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Categories')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddCategory(context, ref),
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: 72 + MediaQuery.of(context).viewPadding.bottom,
+        ),
+        child: FloatingActionButton(
+          onPressed: () => _showAddCategory(context, ref),
+          child: const Icon(Icons.add),
+        ),
       ),
       body: categoriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -80,7 +86,7 @@ class ManageCategoriesScreen extends ConsumerWidget {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            bottom: sheetBottomPadding(context),
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -152,7 +158,7 @@ class ManageCategoriesScreen extends ConsumerWidget {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            bottom: sheetBottomPadding(context),
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -240,3 +246,4 @@ class ManageCategoriesScreen extends ConsumerWidget {
     );
   }
 }
+

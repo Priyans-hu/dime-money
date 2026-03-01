@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/core/utils/sheet_padding.dart';
 import 'package:dime_money/features/budgets/presentation/providers/budget_provider.dart';
 import 'package:dime_money/features/budgets/presentation/widgets/budget_card.dart';
 import 'package:dime_money/shared/widgets/empty_state.dart';
@@ -55,7 +56,7 @@ class BudgetsScreen extends ConsumerWidget {
         padding: EdgeInsets.only(
           left: 16,
           right: 16,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          bottom: sheetBottomPadding(context),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -83,6 +84,7 @@ class BudgetsScreen extends ConsumerWidget {
                     await ref
                         .read(budgetRepositoryProvider)
                         .deleteById(budget.id);
+                    ref.invalidate(budgetWithSpentProvider);
                     if (context.mounted) Navigator.pop(context);
                   },
                   child: const Text('Delete',
@@ -101,6 +103,7 @@ class BudgetsScreen extends ConsumerWidget {
                           year: budget.year,
                           month: budget.month,
                         );
+                    ref.invalidate(budgetWithSpentProvider);
                     if (context.mounted) Navigator.pop(context);
                   },
                   child: const Text('Update'),

@@ -6,6 +6,7 @@ import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/extensions/currency_ext.dart';
 import 'package:dime_money/core/extensions/date_ext.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/core/utils/sheet_padding.dart';
 import 'package:dime_money/features/recurring/presentation/providers/recurring_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/shared/widgets/empty_state.dart';
@@ -19,9 +20,14 @@ class RecurringScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Recurring')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddRule(context, ref),
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: 72 + MediaQuery.of(context).viewPadding.bottom,
+        ),
+        child: FloatingActionButton(
+          onPressed: () => _showAddRule(context, ref),
+          child: const Icon(Icons.add),
+        ),
       ),
       body: rulesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -67,7 +73,7 @@ class RecurringScreen extends ConsumerWidget {
             padding: EdgeInsets.only(
               left: 16,
               right: 16,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              bottom: sheetBottomPadding(context),
             ),
             child: SingleChildScrollView(
               child: Column(

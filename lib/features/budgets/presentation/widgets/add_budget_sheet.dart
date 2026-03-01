@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/core/utils/sheet_padding.dart';
 import 'package:dime_money/features/budgets/presentation/providers/budget_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 
@@ -21,7 +22,7 @@ void showAddBudgetSheet(BuildContext context, WidgetRef ref) {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            bottom: sheetBottomPadding(context),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -83,6 +84,7 @@ void showAddBudgetSheet(BuildContext context, WidgetRef ref) {
                         year: now.year,
                         month: now.month,
                       );
+                  ref.invalidate(budgetWithSpentProvider);
                   if (context.mounted) Navigator.pop(context);
                 },
                 child: const Text('Set Budget'),

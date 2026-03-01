@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:dime_money/core/constants/enums.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:dime_money/core/utils/haptics.dart';
+import 'package:dime_money/core/utils/sheet_padding.dart';
 import 'package:dime_money/core/theme/color_tokens.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/features/accounts/presentation/providers/accounts_provider.dart';
@@ -35,9 +36,14 @@ class ManageAccountsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddAccount(context, ref),
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: 72 + MediaQuery.of(context).viewPadding.bottom,
+        ),
+        child: FloatingActionButton(
+          onPressed: () => _showAddAccount(context, ref),
+          child: const Icon(Icons.add),
+        ),
       ),
       body: accountsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -77,7 +83,7 @@ class ManageAccountsScreen extends ConsumerWidget {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            bottom: sheetBottomPadding(context),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
