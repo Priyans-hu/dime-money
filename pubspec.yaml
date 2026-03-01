@@ -1,7 +1,7 @@
 name: dime_money
 description: A minimal, beautiful personal finance tracker
 publish_to: 'none'
-version: 0.4.0+5
+version: 0.4.1+6
 
 environment:
   sdk: ^3.11.0
