@@ -14,6 +14,7 @@ class BalanceHeader extends ConsumerWidget {
     final balanceAsync = ref.watch(totalBalanceProvider);
     final totalsAsync = ref.watch(dashboardTotalsProvider);
     final currency = ref.watch(currencySymbolProvider);
+    final incomeEnabled = ref.watch(incomeEnabledProvider);
     final colorScheme = Theme.of(context).colorScheme;
 
     return GlassCard(
@@ -59,16 +60,18 @@ class BalanceHeader extends ConsumerWidget {
             error: (_, _) => const SizedBox.shrink(),
             data: (totals) => Row(
               children: [
-                Expanded(
-                  child: _StatChip(
-                    label: 'Income',
-                    amount: totals.income,
-                    color: Colors.green,
-                    icon: Icons.south_west,
-                    currency: currency,
+                if (incomeEnabled) ...[
+                  Expanded(
+                    child: _StatChip(
+                      label: 'Income',
+                      amount: totals.income,
+                      color: Colors.green,
+                      icon: Icons.south_west,
+                      currency: currency,
+                    ),
                   ),
-                ),
-                const Gap(12),
+                  const Gap(12),
+                ],
                 Expanded(
                   child: _StatChip(
                     label: 'Expenses',
