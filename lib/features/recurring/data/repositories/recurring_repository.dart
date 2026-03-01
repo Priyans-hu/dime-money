@@ -97,9 +97,14 @@ class RecurringRepository {
       case RecurrenceType.biweekly:
         return from.add(const Duration(days: 14));
       case RecurrenceType.monthly:
-        return DateTime(from.year, from.month + 1, from.day);
+        final nextMonth = from.month + 1;
+        final nextYear = from.year + (nextMonth > 12 ? 1 : 0);
+        final month = nextMonth > 12 ? nextMonth - 12 : nextMonth;
+        final maxDay = DateTime(nextYear, month + 1, 0).day;
+        return DateTime(nextYear, month, from.day.clamp(1, maxDay));
       case RecurrenceType.yearly:
-        return DateTime(from.year + 1, from.month, from.day);
+        final maxDay = DateTime(from.year + 1, from.month + 1, 0).day;
+        return DateTime(from.year + 1, from.month, from.day.clamp(1, maxDay));
     }
   }
 }

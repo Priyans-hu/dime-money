@@ -28,7 +28,7 @@ class PeriodToggle extends ConsumerWidget {
       selected: {current},
       onSelectionChanged: (selection) {
         Haptics.selection();
-        ref.read(dashboardPeriodProvider.notifier).state = selection.first;
+        ref.read(dashboardPeriodProvider.notifier).set(selection.first);
       },
       style: ButtonStyle(
         visualDensity: VisualDensity.compact,

@@ -1,11 +1,36 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dime_money/core/extensions/date_ext.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 
 enum DashboardPeriod { daily, weekly, monthly }
 
 final dashboardPeriodProvider =
-    StateProvider<DashboardPeriod>((_) => DashboardPeriod.monthly);
+    StateNotifierProvider<DashboardPeriodNotifier, DashboardPeriod>((ref) {
+  return DashboardPeriodNotifier();
+});
+
+class DashboardPeriodNotifier extends StateNotifier<DashboardPeriod> {
+  DashboardPeriodNotifier() : super(DashboardPeriod.monthly) {
+    _load();
+  }
+
+  static const _key = 'dashboard_period';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final index = prefs.getInt(_key);
+    if (index != null && index < DashboardPeriod.values.length) {
+      state = DashboardPeriod.values[index];
+    }
+  }
+
+  Future<void> set(DashboardPeriod period) async {
+    state = period;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_key, period.index);
+  }
+}
 
 final dashboardTotalsProvider =
     FutureProvider<({double income, double expense})>((ref) async {

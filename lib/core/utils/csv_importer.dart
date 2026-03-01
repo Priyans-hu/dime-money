@@ -46,7 +46,7 @@ class CsvImporter {
     final existingTxns = await _db.select(_db.transactions).get();
     final existingKeys = <String>{};
     for (final t in existingTxns) {
-      existingKeys.add(_txnKey(t.date, t.type.name, t.amount));
+      existingKeys.add(_txnKey(t.date, t.type.name, t.amount, t.categoryId));
     }
 
     int imported = 0;
@@ -75,13 +75,6 @@ class CsvImporter {
         orElse: () => TransactionType.expense,
       );
 
-      // Duplicate detection
-      final key = _txnKey(date, type.name, amount);
-      if (existingKeys.contains(key)) {
-        duplicates++;
-        continue;
-      }
-
       // Category (case-insensitive lookup)
       int? categoryId;
       if (row.length > 3 && row[3].toString().isNotEmpty) {
@@ -98,6 +91,13 @@ class CsvImporter {
               ));
           catMap[catName.toLowerCase()] = categoryId;
         }
+      }
+
+      // Duplicate detection (includes category to avoid false positives)
+      final key = _txnKey(date, type.name, amount, categoryId);
+      if (existingKeys.contains(key)) {
+        duplicates++;
+        continue;
       }
 
       // Account (case-insensitive lookup)
@@ -147,8 +147,8 @@ class CsvImporter {
     return ImportResult(imported: imported, skipped: skipped, duplicates: duplicates);
   }
 
-  /// Composite key for duplicate detection: date (to minute) + type + amount
-  String _txnKey(DateTime date, String type, double amount) {
-    return '${date.year}-${date.month}-${date.day}-${date.hour}-${date.minute}|$type|${amount.toStringAsFixed(2)}';
+  /// Composite key for duplicate detection: date (to minute) + type + amount + category
+  String _txnKey(DateTime date, String type, double amount, int? categoryId) {
+    return '${date.year}-${date.month}-${date.day}-${date.hour}-${date.minute}|$type|${amount.toStringAsFixed(2)}|${categoryId ?? ''}';
   }
 }

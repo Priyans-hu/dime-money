@@ -11,7 +11,12 @@ void main() {
     Widget buildWithPeriod(DashboardPeriod period) {
       return ProviderScope(
         overrides: [
-          dashboardPeriodProvider.overrideWith((ref) => period),
+          dashboardPeriodProvider.overrideWith((_) {
+            final notifier = DashboardPeriodNotifier();
+            // ignore: invalid_use_of_protected_member
+            notifier.state = period;
+            return notifier;
+          }),
           dashboardCategoryBreakdownProvider.overrideWith(
             (ref) async => <int, double>{},
           ),
