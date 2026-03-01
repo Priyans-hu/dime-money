@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dime_money/core/constants/enums.dart';
 import 'package:dime_money/core/database/app_database.dart';
+import 'package:dime_money/core/extensions/currency_ext.dart';
 import 'package:dime_money/core/extensions/date_ext.dart';
+import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/features/transactions/presentation/widgets/quick_add_sheet.dart';
 import 'package:dime_money/features/transactions/presentation/widgets/transaction_tile.dart';
@@ -59,6 +62,7 @@ class _TransactionHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
+    final currency = ref.watch(currencySymbolProvider);
     final transactionsAsync = _searchQuery.isEmpty
         ? ref.watch(allTransactionsProvider)
         : ref.watch(searchTransactionsProvider(_searchQuery));
@@ -111,21 +115,40 @@ class _TransactionHistoryScreenState
               final dateLabel = grouped.keys.elementAt(index);
               final items = grouped[dateLabel]!;
 
+              final dayExpense = items
+                  .where((t) => t.type == TransactionType.expense)
+                  .fold<double>(0, (sum, t) => sum + t.amount);
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                    child: Text(
-                      dateLabel,
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelLarge
-                          ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          dateLabel,
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                        ),
+                        if (dayExpense > 0)
+                          Text(
+                            '-${dayExpense.formatCurrency(symbol: currency)}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                  color: Colors.red.withValues(alpha: 0.7),
+                                ),
                           ),
+                      ],
                     ),
                   ),
                   ...items.map((txn) => TransactionTile(
