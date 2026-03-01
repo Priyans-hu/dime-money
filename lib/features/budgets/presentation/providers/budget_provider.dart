@@ -16,6 +16,8 @@ final currentMonthBudgetsProvider = StreamProvider<List<Budget>>((ref) {
 /// Budget with spent amount for current month
 final budgetWithSpentProvider =
     FutureProvider<List<({Budget budget, double spent})>>((ref) async {
+  // Re-evaluate when transactions change (new expense updates spent amounts)
+  ref.watch(allTransactionsProvider);
   final now = DateTime.now();
   final budgets =
       await ref.watch(budgetRepositoryProvider).getForMonth(now.year, now.month);
