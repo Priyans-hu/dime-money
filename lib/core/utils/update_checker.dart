@@ -5,17 +5,20 @@ import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class UpdateInfo {
   final String version;
   final String releaseNotes;
-  final String apkDownloadUrl;
+  final String? apkDownloadUrl;
 
   const UpdateInfo({
     required this.version,
     required this.releaseNotes,
-    required this.apkDownloadUrl,
+    this.apkDownloadUrl,
   });
+
+  bool get hasApk => apkDownloadUrl != null;
 }
 
 class UpdateChecker {
@@ -59,7 +62,7 @@ class UpdateChecker {
       final packageInfo = await PackageInfo.fromPlatform();
       if (!_isNewer(tagName, packageInfo.version)) return null;
 
-      // Find the APK asset
+      // Find the APK asset (optional — update is still reported without it)
       final assets = data['assets'] as List<dynamic>? ?? [];
       String? apkUrl;
       for (final asset in assets) {
@@ -69,7 +72,6 @@ class UpdateChecker {
           break;
         }
       }
-      if (apkUrl == null) return null;
 
       return UpdateInfo(
         version: tagName.replaceAll(RegExp(r'^v'), ''),
@@ -79,6 +81,12 @@ class UpdateChecker {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Open the GitHub releases page in the browser.
+  static Future<void> openReleasePage() async {
+    final uri = Uri.parse('https://github.com/$_repo/releases/latest');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   /// Download APK and open it to trigger Android installer.

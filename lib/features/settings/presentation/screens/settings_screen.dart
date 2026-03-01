@@ -286,10 +286,16 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
 
   Future<void> _download() async {
     if (_updateInfo == null) return;
+    if (!_updateInfo!.hasApk) {
+      // No APK attached — open GitHub release page
+      await UpdateChecker.openReleasePage();
+      if (mounted) Navigator.pop(context);
+      return;
+    }
     setState(() => _downloading = true);
     try {
       await UpdateChecker.downloadAndInstall(
-        _updateInfo!.apkDownloadUrl,
+        _updateInfo!.apkDownloadUrl!,
         (received, total) {
           if (!mounted) return;
           setState(() {
@@ -370,7 +376,11 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
         ),
         FilledButton(
           onPressed: _downloading ? null : _download,
-          child: Text(_downloading ? 'Downloading…' : 'Update'),
+          child: Text(_downloading
+              ? 'Downloading…'
+              : _updateInfo!.hasApk
+                  ? 'Update'
+                  : 'View on GitHub'),
         ),
       ],
     );

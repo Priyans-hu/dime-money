@@ -85,10 +85,15 @@ class _AutoUpdateDialogState extends State<_AutoUpdateDialog> {
   double _progress = 0;
 
   Future<void> _download() async {
+    if (!widget.info.hasApk) {
+      await UpdateChecker.openReleasePage();
+      if (mounted) Navigator.pop(context);
+      return;
+    }
     setState(() => _downloading = true);
     try {
       await UpdateChecker.downloadAndInstall(
-        widget.info.apkDownloadUrl,
+        widget.info.apkDownloadUrl!,
         (received, total) {
           if (!mounted) return;
           setState(() {
@@ -135,7 +140,11 @@ class _AutoUpdateDialogState extends State<_AutoUpdateDialog> {
         ),
         FilledButton(
           onPressed: _downloading ? null : _download,
-          child: Text(_downloading ? 'Downloading…' : 'Update'),
+          child: Text(_downloading
+              ? 'Downloading…'
+              : widget.info.hasApk
+                  ? 'Update'
+                  : 'View on GitHub'),
         ),
       ],
     );

@@ -1,7 +1,7 @@
 name: dime_money
 description: A minimal, beautiful personal finance tracker
 publish_to: 'none'
-version: 0.4.1+6
+version: 0.4.2+7
 
 environment:
   sdk: ^3.11.0
@@ -42,6 +42,7 @@ dependencies:
   package_info_plus: ^8.1.0
   http: ^1.2.2
   open_filex: ^4.5.0
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
