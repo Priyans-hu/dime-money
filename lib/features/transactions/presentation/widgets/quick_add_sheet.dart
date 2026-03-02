@@ -107,28 +107,58 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     Haptics.medium();
     final repo = ref.read(transactionRepositoryProvider);
 
-    if (_isEditing) {
-      final txn = widget.editTransaction!;
-      await repo.update(txn.copyWith(
-        type: _type,
-        amount: _parsedAmount,
-        categoryId: Value(_categoryId),
-        accountId: _accountId!,
-        note: _noteController.text.trim(),
-        date: _selectedDate,
-      ));
-    } else {
-      await repo.insert(
-        type: _type,
-        amount: _parsedAmount,
-        categoryId: _categoryId,
-        accountId: _accountId!,
-        note: _noteController.text.trim(),
-        date: _selectedDate,
-      );
+    try {
+      if (_isEditing) {
+        final txn = widget.editTransaction!;
+        await repo.update(txn.copyWith(
+          type: _type,
+          amount: _parsedAmount,
+          categoryId: Value(_categoryId),
+          accountId: _accountId!,
+          note: _noteController.text.trim(),
+          date: _selectedDate,
+        ));
+      } else {
+        // Check for duplicate recent transaction
+        final isDuplicate = await repo.hasDuplicateRecent(
+          amount: _parsedAmount,
+          accountId: _accountId!,
+          categoryId: _categoryId,
+        );
+        if (isDuplicate && mounted) {
+          final proceed = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Possible duplicate'),
+              content: const Text(
+                  'A similar transaction was added in the last minute. Add anyway?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Add anyway'),
+                ),
+              ],
+            ),
+          );
+          if (proceed != true) return;
+        }
+        await repo.insert(
+          type: _type,
+          amount: _parsedAmount,
+          categoryId: _categoryId,
+          accountId: _accountId!,
+          note: _noteController.text.trim(),
+          date: _selectedDate,
+        );
+      }
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      _showError('Failed to save: $e');
     }
-
-    if (mounted) Navigator.of(context).pop();
   }
 
   String _formatDate(DateTime date) {

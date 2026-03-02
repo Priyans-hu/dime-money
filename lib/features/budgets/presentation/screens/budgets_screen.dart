@@ -7,6 +7,7 @@ import 'package:dime_money/core/utils/sheet_padding.dart';
 import 'package:dime_money/features/budgets/presentation/providers/budget_provider.dart';
 import 'package:dime_money/features/budgets/presentation/widgets/budget_card.dart';
 import 'package:dime_money/shared/widgets/empty_state.dart';
+import 'package:dime_money/shared/widgets/snack_bar_helpers.dart';
 
 class BudgetsScreen extends ConsumerWidget {
   const BudgetsScreen({super.key});
@@ -80,12 +81,37 @@ class BudgetsScreen extends ConsumerWidget {
               children: [
                 TextButton(
                   onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Delete budget?'),
+                        content: const Text(
+                            'This will permanently remove this budget.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true) return;
                     Haptics.medium();
-                    await ref
-                        .read(budgetRepositoryProvider)
-                        .deleteById(budget.id);
-                    ref.invalidate(budgetWithSpentProvider);
-                    if (context.mounted) Navigator.pop(context);
+                    try {
+                      await ref
+                          .read(budgetRepositoryProvider)
+                          .deleteById(budget.id);
+                      ref.invalidate(budgetWithSpentProvider);
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (e) {
+                      if (context.mounted) {
+                        showErrorSnackBar(context, 'Failed to delete budget: $e');
+                      }
+                    }
                   },
                   child: const Text('Delete',
                       style: TextStyle(color: Colors.red)),
@@ -97,14 +123,20 @@ class BudgetsScreen extends ConsumerWidget {
                         double.tryParse(amountController.text) ?? 0;
                     if (amount <= 0) return;
                     Haptics.medium();
-                    await ref.read(budgetRepositoryProvider).upsert(
-                          categoryId: budget.categoryId,
-                          amount: amount,
-                          year: budget.year,
-                          month: budget.month,
-                        );
-                    ref.invalidate(budgetWithSpentProvider);
-                    if (context.mounted) Navigator.pop(context);
+                    try {
+                      await ref.read(budgetRepositoryProvider).upsert(
+                            categoryId: budget.categoryId,
+                            amount: amount,
+                            year: budget.year,
+                            month: budget.month,
+                          );
+                      ref.invalidate(budgetWithSpentProvider);
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (e) {
+                      if (context.mounted) {
+                        showErrorSnackBar(context, 'Failed to update budget: $e');
+                      }
+                    }
                   },
                   child: const Text('Update'),
                 ),

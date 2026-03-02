@@ -9,6 +9,7 @@ import 'package:dime_money/features/transactions/presentation/providers/transact
 import 'package:dime_money/features/transactions/presentation/widgets/quick_add_sheet.dart';
 import 'package:dime_money/features/transactions/presentation/widgets/transaction_tile.dart';
 import 'package:dime_money/shared/widgets/empty_state.dart';
+import 'package:dime_money/shared/widgets/snack_bar_helpers.dart';
 
 class TransactionHistoryScreen extends ConsumerStatefulWidget {
   const TransactionHistoryScreen({super.key});
@@ -22,6 +23,27 @@ class _TransactionHistoryScreenState
     extends ConsumerState<TransactionHistoryScreen> {
   String _searchQuery = '';
   bool _showSearch = false;
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_searchQuery.isNotEmpty) return;
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(paginatedTransactionsProvider.notifier).loadMore();
+    }
+  }
 
   void _openEditSheet(Transaction txn) {
     showModalBottomSheet(
@@ -31,10 +53,17 @@ class _TransactionHistoryScreenState
     );
   }
 
-  void _deleteWithUndo(Transaction txn) {
+  void _deleteWithUndo(Transaction txn) async {
     final repo = ref.read(transactionRepositoryProvider);
-    repo.deleteById(txn.id);
+    try {
+      await repo.deleteById(txn.id);
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Failed to delete: $e');
+      return;
+    }
+    ref.read(paginatedTransactionsProvider.notifier).refresh();
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -43,8 +72,8 @@ class _TransactionHistoryScreenState
         duration: const Duration(seconds: 4),
         action: SnackBarAction(
           label: 'Undo',
-          onPressed: () {
-            repo.insert(
+          onPressed: () async {
+            await repo.insert(
               type: txn.type,
               amount: txn.amount,
               categoryId: txn.categoryId,
@@ -54,6 +83,7 @@ class _TransactionHistoryScreenState
               date: txn.date,
               recurringRuleId: txn.recurringRuleId,
             );
+            ref.read(paginatedTransactionsProvider.notifier).refresh();
           },
         ),
       ),
@@ -64,7 +94,7 @@ class _TransactionHistoryScreenState
   Widget build(BuildContext context) {
     final currency = ref.watch(currencySymbolProvider);
     final transactionsAsync = _searchQuery.isEmpty
-        ? ref.watch(allTransactionsProvider)
+        ? ref.watch(paginatedTransactionsProvider)
         : ref.watch(searchTransactionsProvider(_searchQuery));
 
     return Scaffold(
@@ -109,6 +139,7 @@ class _TransactionHistoryScreenState
           }
 
           return ListView.builder(
+            controller: _searchQuery.isEmpty ? _scrollController : null,
             padding: const EdgeInsets.only(bottom: 80),
             itemCount: grouped.length,
             itemBuilder: (context, index) {

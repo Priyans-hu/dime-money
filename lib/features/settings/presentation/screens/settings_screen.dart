@@ -6,9 +6,11 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 import 'package:dime_money/core/providers/database_provider.dart';
 import 'package:dime_money/core/providers/theme_provider.dart';
+import 'package:dime_money/core/utils/backup_service.dart';
 import 'package:dime_money/core/utils/csv_exporter.dart';
 import 'package:dime_money/core/utils/csv_importer.dart';
 import 'package:dime_money/core/utils/update_checker.dart';
+import 'package:dime_money/shared/widgets/snack_bar_helpers.dart';
 import 'package:dime_money/features/settings/presentation/providers/settings_provider.dart';
 import 'package:dime_money/core/utils/seed_data.dart';
 
@@ -122,6 +124,24 @@ class SettingsScreen extends ConsumerWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.backup),
+            title: const Text('Backup now'),
+            subtitle: const Text('Save database to local storage'),
+            onTap: () async {
+              try {
+                final db = ref.read(databaseProvider);
+                await BackupService(db).autoBackup(force: true);
+                if (context.mounted) {
+                  showSuccessSnackBar(context, 'Backup created');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  showErrorSnackBar(context, 'Backup failed: $e');
+                }
+              }
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.download),
             title: const Text('Import CSV'),
             subtitle: const Text('Import from file'),
@@ -136,15 +156,49 @@ class SettingsScreen extends ConsumerWidget {
 
               try {
                 final db = ref.read(databaseProvider);
-                final result =
+                final importResult =
                     await CsvImporter(db).importFromFile(File(path));
                 if (context.mounted) {
-                  final parts = <String>['Imported ${result.imported}'];
-                  if (result.duplicates > 0) parts.add('${result.duplicates} duplicates skipped');
-                  if (result.skipped > 0) parts.add('${result.skipped} invalid rows');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(parts.join(', '))),
-                  );
+                  if (importResult.errors.isNotEmpty) {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(
+                            'Imported ${importResult.imported} with ${importResult.errors.length} errors'),
+                        content: SizedBox(
+                          width: double.maxFinite,
+                          height: 300,
+                          child: ListView.builder(
+                            itemCount: importResult.errors.length,
+                            itemBuilder: (_, i) {
+                              final err = importResult.errors[i];
+                              return ListTile(
+                                dense: true,
+                                leading: Text('Row ${err.rowNumber}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                title: Text(err.reason),
+                              );
+                            },
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    final parts = <String>['Imported ${importResult.imported}'];
+                    if (importResult.duplicates > 0) {
+                      parts.add('${importResult.duplicates} duplicates skipped');
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(parts.join(', '))),
+                    );
+                  }
                 }
               } catch (e) {
                 if (context.mounted) {
@@ -159,7 +213,7 @@ class SettingsScreen extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.sms),
               title: const Text('Import from SMS'),
-              subtitle: const Text('Scan bank messages'),
+              subtitle: const Text('Scan Indian bank SMS (Rs/INR/\u20B9)'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.go('/settings/sms-import'),
             ),
@@ -277,7 +331,7 @@ class _UpdateCheckDialogState extends State<_UpdateCheckDialog> {
 
   Future<void> _check() async {
     try {
-      final info = await UpdateChecker.checkForUpdate();
+      final info = await UpdateChecker.checkForUpdate(force: true);
       if (!mounted) return;
       setState(() {
         _updateInfo = info;

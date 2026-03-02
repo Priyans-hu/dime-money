@@ -67,7 +67,16 @@ class _LockGateState extends ConsumerState<LockGate>
     }
   }
 
-  void _disableLock() {
+  Future<void> _disableLock() async {
+    try {
+      final didAuth = await _auth.authenticate(
+        localizedReason: 'Verify identity to disable lock',
+        options: const AuthenticationOptions(biometricOnly: true),
+      );
+      if (!didAuth) return;
+    } catch (_) {
+      return;
+    }
     ref.read(biometricEnabledProvider.notifier).disable();
     setState(() => _isLocked = false);
   }

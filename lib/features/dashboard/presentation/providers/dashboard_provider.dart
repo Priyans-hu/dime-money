@@ -91,10 +91,5 @@ final totalBalanceProvider = FutureProvider<double>((ref) async {
   ref.watch(allTransactionsProvider);
 
   final accountRepo = ref.watch(accountRepositoryProvider);
-  final accounts = await accountRepo.getAll();
-  double total = 0;
-  for (final account in accounts) {
-    total += await accountRepo.computeBalance(account.id);
-  }
-  return total;
+  return accountRepo.computeTotalBalance();
 });

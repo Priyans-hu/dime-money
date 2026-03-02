@@ -220,6 +220,93 @@ void main() {
     });
   });
 
+  group('pagination', () {
+    test('getPage returns limited results', () async {
+      final accounts = await db.select(db.accounts).get();
+      final categories = await db.select(db.categories).get();
+      final accountId = accounts.first.id;
+      final catId = categories.first.id;
+
+      for (var i = 0; i < 5; i++) {
+        await repo.insert(
+          type: TransactionType.expense,
+          amount: 10.0 + i,
+          categoryId: catId,
+          accountId: accountId,
+          date: DateTime.now().subtract(Duration(days: i)),
+        );
+      }
+
+      final page1 = await repo.getPage(limit: 2, offset: 0);
+      expect(page1.length, 2);
+
+      final page2 = await repo.getPage(limit: 2, offset: 2);
+      expect(page2.length, 2);
+
+      final page3 = await repo.getPage(limit: 2, offset: 4);
+      expect(page3.length, 1);
+    });
+
+    test('count returns total number of transactions', () async {
+      final accounts = await db.select(db.accounts).get();
+      final categories = await db.select(db.categories).get();
+      final accountId = accounts.first.id;
+      final catId = categories.first.id;
+
+      expect(await repo.count(), 0);
+
+      await repo.insert(
+        type: TransactionType.expense,
+        amount: 10,
+        categoryId: catId,
+        accountId: accountId,
+        date: DateTime.now(),
+      );
+      await repo.insert(
+        type: TransactionType.expense,
+        amount: 20,
+        categoryId: catId,
+        accountId: accountId,
+        date: DateTime.now(),
+      );
+
+      expect(await repo.count(), 2);
+    });
+  });
+
+  group('hasDuplicateRecent', () {
+    test('returns false when no recent duplicate', () async {
+      final accounts = await db.select(db.accounts).get();
+      final result = await repo.hasDuplicateRecent(
+        amount: 100,
+        accountId: accounts.first.id,
+      );
+      expect(result, false);
+    });
+
+    test('returns true when recent duplicate exists', () async {
+      final accounts = await db.select(db.accounts).get();
+      final categories = await db.select(db.categories).get();
+      final accountId = accounts.first.id;
+      final catId = categories.first.id;
+
+      await repo.insert(
+        type: TransactionType.expense,
+        amount: 100,
+        categoryId: catId,
+        accountId: accountId,
+        date: DateTime.now(),
+      );
+
+      final result = await repo.hasDuplicateRecent(
+        amount: 100,
+        accountId: accountId,
+        categoryId: catId,
+      );
+      expect(result, true);
+    });
+  });
+
   group('CRUD operations', () {
     test('insert returns an id > 0', () async {
       final accounts = await db.select(db.accounts).get();

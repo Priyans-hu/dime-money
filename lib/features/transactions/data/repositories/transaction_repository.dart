@@ -87,34 +87,26 @@ class TransactionRepository {
       int year, int month) async {
     final start = DateTime(year, month);
     final end = DateTime(year, month + 1);
-
-    final query = _db.select(_db.transactions)
-      ..where((t) =>
-          t.type.equals(TransactionType.expense.name) &
-          t.date.isBetweenValues(start, end) &
-          t.categoryId.isNotNull());
-
-    final rows = await query.get();
-    final map = <int, double>{};
-    for (final row in rows) {
-      map[row.categoryId!] = (map[row.categoryId!] ?? 0) + row.amount;
-    }
-    return map;
+    return expensesByCategoryForRange(start, end);
   }
 
   // Aggregation: sum expenses by category for a date range
   Future<Map<int, double>> expensesByCategoryForRange(
       DateTime start, DateTime end) async {
-    final query = _db.select(_db.transactions)
-      ..where((t) =>
-          t.type.equals(TransactionType.expense.name) &
-          t.date.isBetweenValues(start, end) &
-          t.categoryId.isNotNull());
+    final rows = await _db.customSelect(
+      'SELECT category_id, SUM(amount) AS total '
+      "FROM transactions WHERE type = 'expense' "
+      'AND date >= ? AND date < ? AND category_id IS NOT NULL '
+      'GROUP BY category_id',
+      variables: [
+        Variable.withDateTime(start),
+        Variable.withDateTime(end),
+      ],
+    ).get();
 
-    final rows = await query.get();
     final map = <int, double>{};
     for (final row in rows) {
-      map[row.categoryId!] = (map[row.categoryId!] ?? 0) + row.amount;
+      map[row.read<int>('category_id')] = row.read<double>('total');
     }
     return map;
   }
@@ -122,19 +114,70 @@ class TransactionRepository {
   // Total income/expense for a date range
   Future<({double income, double expense})> totalsForRange(
       DateTime start, DateTime end) async {
-    final rows = await (_db.select(_db.transactions)
-          ..where((t) => t.date.isBetweenValues(start, end)))
-        .get();
+    final result = await _db.customSelect(
+      'SELECT '
+      "COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income, "
+      "COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense "
+      'FROM transactions WHERE date >= ? AND date < ?',
+      variables: [
+        Variable.withDateTime(start),
+        Variable.withDateTime(end),
+      ],
+    ).getSingle();
 
-    double income = 0, expense = 0;
-    for (final row in rows) {
-      if (row.type == TransactionType.income) {
-        income += row.amount;
-      } else if (row.type == TransactionType.expense) {
-        expense += row.amount;
-      }
-    }
-    return (income: income, expense: expense);
+    return (
+      income: result.read<double>('income'),
+      expense: result.read<double>('expense'),
+    );
+  }
+
+  /// Returns a page of transactions, ordered by date desc.
+  Future<List<Transaction>> getPage({
+    required int limit,
+    required int offset,
+  }) {
+    return (_db.select(_db.transactions)
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.date),
+            (t) => OrderingTerm.desc(t.createdAt),
+          ])
+          ..limit(limit, offset: offset))
+        .get();
+  }
+
+  /// Returns total number of transactions.
+  Future<int> count() async {
+    final result = await _db
+        .customSelect('SELECT COUNT(*) AS cnt FROM transactions')
+        .getSingle();
+    return result.read<int>('cnt');
+  }
+
+  /// Checks if a similar transaction was added recently (within [window]).
+  Future<bool> hasDuplicateRecent({
+    required double amount,
+    required int accountId,
+    int? categoryId,
+    Duration window = const Duration(minutes: 1),
+  }) async {
+    final cutoff = DateTime.now().subtract(window);
+    final catClause = categoryId != null
+        ? 'AND category_id = ?'
+        : 'AND category_id IS NULL';
+    final variables = [
+      Variable.withReal(amount),
+      Variable.withInt(accountId),
+      if (categoryId != null) Variable.withInt(categoryId),
+      Variable.withDateTime(cutoff),
+    ];
+    final result = await _db.customSelect(
+      'SELECT COUNT(*) AS cnt FROM transactions '
+      'WHERE amount = ? AND account_id = ? '
+      '$catClause '
+      'AND created_at > ?',
+      variables: variables,
+    ).getSingle();
+    return result.read<int>('cnt') > 0;
   }
 
   /// Returns the most frequently used category ID, or null if no transactions.

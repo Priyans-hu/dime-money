@@ -10,6 +10,7 @@ import 'package:dime_money/features/transactions/presentation/providers/transact
 import 'package:dime_money/features/accounts/presentation/providers/accounts_provider.dart';
 import 'package:dime_money/features/accounts/presentation/widgets/account_card.dart';
 import 'package:dime_money/features/accounts/presentation/widgets/transfer_sheet.dart';
+import 'package:dime_money/shared/widgets/snack_bar_helpers.dart';
 
 class ManageAccountsScreen extends ConsumerWidget {
   const ManageAccountsScreen({super.key});
@@ -124,15 +125,21 @@ class ManageAccountsScreen extends ConsumerWidget {
                   final name = nameController.text.trim();
                   if (name.isEmpty) return;
                   Haptics.medium();
-                  await ref.read(accountRepositoryProvider).insert(
-                        name: name,
-                        type: selectedType,
-                        initialBalance:
-                            double.tryParse(balanceController.text) ?? 0,
-                        color: selectedColor.toARGB32(),
-                        iconCodePoint: selectedIcon.codePoint,
-                      );
-                  if (context.mounted) Navigator.pop(context);
+                  try {
+                    await ref.read(accountRepositoryProvider).insert(
+                          name: name,
+                          type: selectedType,
+                          initialBalance:
+                              double.tryParse(balanceController.text) ?? 0,
+                          color: selectedColor.toARGB32(),
+                          iconCodePoint: selectedIcon.codePoint,
+                        );
+                    if (context.mounted) Navigator.pop(context);
+                  } catch (e) {
+                    if (context.mounted) {
+                      showErrorSnackBar(context, 'Failed to add account: $e');
+                    }
+                  }
                 },
                 child: const Text('Add Account'),
               ),
@@ -159,8 +166,14 @@ class ManageAccountsScreen extends ConsumerWidget {
           FilledButton(
             onPressed: () async {
               Haptics.medium();
-              await ref.read(accountRepositoryProvider).archive(account.id);
-              if (context.mounted) Navigator.pop(context);
+              try {
+                await ref.read(accountRepositoryProvider).archive(account.id);
+                if (context.mounted) Navigator.pop(context);
+              } catch (e) {
+                if (context.mounted) {
+                  showErrorSnackBar(context, 'Failed to archive account: $e');
+                }
+              }
             },
             child: const Text('Archive'),
           ),
