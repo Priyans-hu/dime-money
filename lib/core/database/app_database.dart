@@ -39,6 +39,12 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
         await _seedDefaults();
       },
+      onUpgrade: (Migrator m, int from, int to) async {
+        // Future migrations go here
+      },
+      beforeOpen: (details) async {
+        await customStatement('PRAGMA foreign_keys = ON');
+      },
     );
   }
 

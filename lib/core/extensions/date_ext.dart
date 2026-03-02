@@ -1,5 +1,9 @@
 import 'package:intl/intl.dart';
 
+/// All dates in Dime Money use local time intentionally.
+/// Since the app is fully offline with no sync, UTC conversion is unnecessary
+/// and would add complexity without benefit. If cloud sync is added in the
+/// future, consider migrating stored dates to UTC.
 extension DateTimeExt on DateTime {
   String get formatted => DateFormat('MMM d, y').format(this);
   String get shortFormatted => DateFormat('MMM d').format(this);

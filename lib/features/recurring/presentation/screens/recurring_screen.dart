@@ -11,6 +11,7 @@ import 'package:dime_money/features/settings/presentation/providers/settings_pro
 import 'package:dime_money/features/recurring/presentation/providers/recurring_provider.dart';
 import 'package:dime_money/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:dime_money/shared/widgets/empty_state.dart';
+import 'package:dime_money/shared/widgets/snack_bar_helpers.dart';
 
 class RecurringScreen extends ConsumerWidget {
   const RecurringScreen({super.key});
@@ -173,18 +174,24 @@ class RecurringScreen extends ConsumerWidget {
                           double.tryParse(amountController.text) ?? 0;
                       if (amount <= 0 || accountId == null) return;
                       Haptics.medium();
-                      await ref
-                          .read(recurringRepositoryProvider)
-                          .insert(
-                            type: type,
-                            amount: amount,
-                            categoryId: categoryId,
-                            accountId: accountId!,
-                            note: noteController.text.trim(),
-                            recurrence: recurrence,
-                            startDate: DateTime.now(),
-                          );
-                      if (context.mounted) Navigator.pop(context);
+                      try {
+                        await ref
+                            .read(recurringRepositoryProvider)
+                            .insert(
+                              type: type,
+                              amount: amount,
+                              categoryId: categoryId,
+                              accountId: accountId!,
+                              note: noteController.text.trim(),
+                              recurrence: recurrence,
+                              startDate: DateTime.now(),
+                            );
+                        if (context.mounted) Navigator.pop(context);
+                      } catch (e) {
+                        if (context.mounted) {
+                          showErrorSnackBar(context, 'Failed to create rule: $e');
+                        }
+                      }
                     },
                     child: const Text('Create Rule'),
                   ),
@@ -241,10 +248,35 @@ class _RecurringRuleTile extends ConsumerWidget {
           ),
         ),
         onLongPress: () async {
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Delete recurring rule?'),
+              content: const Text(
+                  'Future transactions won\'t be generated.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          );
+          if (confirmed != true) return;
           Haptics.medium();
-          await ref
-              .read(recurringRepositoryProvider)
-              .deleteById(rule.id);
+          try {
+            await ref
+                .read(recurringRepositoryProvider)
+                .deleteById(rule.id);
+          } catch (e) {
+            if (context.mounted) {
+              showErrorSnackBar(context, 'Failed to delete rule: $e');
+            }
+          }
         },
       ),
     );

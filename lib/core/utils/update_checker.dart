@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateInfo {
@@ -25,6 +26,8 @@ class UpdateChecker {
   static const _repo = 'Priyans-hu/dime-money';
   static const _apiUrl =
       'https://api.github.com/repos/$_repo/releases/latest';
+  static const _checkKey = 'update_check_epoch';
+  static const _minCheckIntervalMs = 3600000; // 1 hour
 
   /// Compare semver strings. Returns true if [remote] > [local].
   /// Handles formats like "0.3.0", "v0.3.1", "0.4.0+5".
@@ -47,13 +50,32 @@ class UpdateChecker {
 
   /// Check GitHub releases for a newer version.
   /// Returns [UpdateInfo] if an update is available, null otherwise.
-  static Future<UpdateInfo?> checkForUpdate() async {
+  /// Skips if checked less than 1 hour ago.
+  static Future<UpdateInfo?> checkForUpdate({bool force = false}) async {
     try {
+      // Rate-limit: skip if checked recently
+      if (!force) {
+        final prefs = await SharedPreferences.getInstance();
+        final lastCheck = prefs.getInt(_checkKey) ?? 0;
+        final elapsed =
+            DateTime.now().millisecondsSinceEpoch - lastCheck;
+        if (elapsed < _minCheckIntervalMs) return null;
+      }
+
       final response = await http
           .get(Uri.parse(_apiUrl), headers: {'Accept': 'application/json'})
           .timeout(const Duration(seconds: 10));
 
+      // Handle rate limiting gracefully
+      if (response.statusCode == 403 || response.statusCode == 429) {
+        return null;
+      }
       if (response.statusCode != 200) return null;
+
+      // Record successful check time
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(
+          _checkKey, DateTime.now().millisecondsSinceEpoch);
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final tagName = data['tag_name'] as String? ?? '';

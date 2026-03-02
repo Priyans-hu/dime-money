@@ -5,15 +5,24 @@ import 'package:dime_money/core/constants/enums.dart';
 import 'package:dime_money/core/database/app_database.dart';
 import 'package:drift/drift.dart';
 
+class ImportError {
+  final int rowNumber;
+  final String reason;
+
+  const ImportError({required this.rowNumber, required this.reason});
+}
+
 class ImportResult {
   final int imported;
   final int skipped;
   final int duplicates;
+  final List<ImportError> errors;
 
   const ImportResult({
     required this.imported,
     required this.skipped,
     required this.duplicates,
+    this.errors = const [],
   });
 }
 
@@ -52,10 +61,15 @@ class CsvImporter {
     int imported = 0;
     int skipped = 0;
     int duplicates = 0;
+    final errors = <ImportError>[];
 
-    for (final row in dataRows) {
+    for (var i = 0; i < dataRows.length; i++) {
+      final row = dataRows[i];
+      final rowNumber = i + 2; // 1-indexed + header row
+
       if (row.length < 3) {
         skipped++;
+        errors.add(ImportError(rowNumber: rowNumber, reason: 'Too few columns'));
         continue;
       }
 
@@ -65,8 +79,14 @@ class CsvImporter {
 
       final date = DateTime.tryParse(dateStr);
       final amount = double.tryParse(amountStr);
-      if (date == null || amount == null || amount <= 0) {
+      if (date == null) {
         skipped++;
+        errors.add(ImportError(rowNumber: rowNumber, reason: 'Invalid date: $dateStr'));
+        continue;
+      }
+      if (amount == null || amount <= 0) {
+        skipped++;
+        errors.add(ImportError(rowNumber: rowNumber, reason: 'Invalid amount: $amountStr'));
         continue;
       }
 
@@ -144,7 +164,7 @@ class CsvImporter {
       imported++;
     }
 
-    return ImportResult(imported: imported, skipped: skipped, duplicates: duplicates);
+    return ImportResult(imported: imported, skipped: skipped, duplicates: duplicates, errors: errors);
   }
 
   /// Composite key for duplicate detection: date (to minute) + type + amount + category
